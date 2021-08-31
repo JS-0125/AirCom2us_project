@@ -28,6 +28,7 @@ public class InputManager : MonoBehaviour
             else if (Input.GetTouch(0).phase == TouchPhase.Moved)
             {
                 currentPoint = Input.GetTouch(0).position;
+                NetworkUtils.SendMovePacket(currentPoint);
                 print("currentPoint Touched" + "x :" + currentPoint.x + "y : " + currentPoint.y);
             }
             // 터치된 손가락이 스크린에서 떨어질 때

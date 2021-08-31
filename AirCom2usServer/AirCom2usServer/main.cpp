@@ -14,39 +14,6 @@
 using namespace std;
 
 
-//void process_packet(int p_id, unsigned char* p_buf)
-//{
-//	switch (p_buf[1]) {
-//	case CS_LOGIN: {
-//		cs_packet_login* packet = reinterpret_cast<cs_packet_login*>(p_buf);
-//		break;
-//	}
-//	case CS_MOVE: {
-//		cs_packet_move* packet = reinterpret_cast<cs_packet_move*>(p_buf);
-//		(*static_cast<PLAYER*>(objects[p_id])).move_time = packet->move_time;
-//		do_move(p_id, packet->direction);
-//		break;
-//	}
-//	case CS_ATTACK: {
-//		cs_packet_attack* packet = reinterpret_cast<cs_packet_attack*>(p_buf);
-//		static_cast<PLAYER*>(objects[p_id])->m_vl.lock();
-//		auto objs = static_cast<PLAYER*>(objects[p_id])->m_view_list;
-//		static_cast<PLAYER*>(objects[p_id])->m_vl.unlock();
-//
-//		for (const auto& obj_id : objs) {
-//			if (1 >= abs(objects[obj_id]->x - objects[p_id]->x) && 1 >= abs(objects[obj_id]->y - objects[p_id]->y))
-//				do_attack(obj_id, p_id);
-//		}
-//		break;
-//	}
-//
-//	default:
-//		cout << "Unknown Packet Type from Client[" << p_id;
-//		cout << "] Packet Type [" << p_buf[1] << "]";
-//		while (true);
-//	}
-//}
-
 constexpr int SERVER_ID = 0;
 constexpr int MAX_BUFFER = 1024;
 
@@ -140,9 +107,9 @@ void send_move_packet(int c_id, int p_id)
 }
 
 
-void do_move(int p_id, char dir)
+void do_move(int p_id, int x, int y)
 {
-	cout << dir << endl;
+	cout << x << ", " << y << endl;
 	send_move_packet(p_id, p_id);
 }
 
@@ -156,8 +123,9 @@ void process_packet(int p_id, unsigned char* p_buf)
 	}
 	case CS_MOVE: {
 		cs_packet_move* packet = reinterpret_cast<cs_packet_move*>(p_buf);
+		cout << "process packet - move" << endl;
 		players[p_id]->move_time = packet->move_time;
-		do_move(p_id, packet->direction);
+		do_move(p_id, packet->x, packet->y);
 		break;
 	}
 	default:

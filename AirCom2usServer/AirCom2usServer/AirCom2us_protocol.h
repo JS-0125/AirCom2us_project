@@ -3,9 +3,9 @@
 #define SERVER_PORT		3500
 constexpr int MAX_USER = 10000;
 
-#define CS_LOGIN		1		// 클라이언트가 서버에 접속 요청
-#define CS_MOVE		2		// 클라이언트가 아바타기 이동을 서버에 요청
-#define CS_LOGOUT	3		// 클라이언트 종료
+#define CS_LOGIN		0		// 클라이언트가 서버에 접속 요청
+#define CS_MOVE		1		// 클라이언트가 아바타기 이동을 서버에 요청
+#define CS_LOGOUT	2		// 클라이언트 종료
 
 #define SC_LOGIN_OK		1	// CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 수락
 #define SC_LOGIN_FAIL		2	// CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 거절
@@ -43,7 +43,7 @@ struct cs_packet_login {
 struct cs_packet_move {
 	unsigned char	size;
 	char	type;
-	char	direction;		// 0:Up, 1:Down, 2:Left, 3:Right
+	int	x, y;		// 0:Up, 1:Down, 2:Left, 3:Right
 	int move_time;
 };
 

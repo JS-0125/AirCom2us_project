@@ -28,7 +28,7 @@ public enum SC
 //}
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct sc_packet_login_ok
+public class sc_packet_login_ok
 {
 	byte size;
 	char type;
@@ -38,14 +38,14 @@ public struct sc_packet_login_ok
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct sc_packet_login_fail
+public class sc_packet_login_fail
 {
 	byte size;
 	char type;
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct sc_packet_position
+public class sc_packet_position
 {
 	byte size;
 	char type;
@@ -56,23 +56,32 @@ public struct sc_packet_position
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct cs_packet_login
+public class cs_packet_login
 {
 	byte size;
 	char type;
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct cs_packet_move
+public class cs_packet_move
 {
 	byte size;
-	char type;
-	char direction;     // 0:Up, 1:Down, 2:Left, 3:Right
+	byte type;
+	int x, y;     // 0:Up, 1:Down, 2:Left, 3:Right
 	int move_time;
+
+	public cs_packet_move (byte packet_size, byte packet_type, int posX, int posY, int current_time)
+    {
+		size = packet_size;
+		type = packet_type;
+		x = posX;
+		y = posY;
+		move_time = current_time;
+    }
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct cs_packet_logout
+public class cs_packet_logout
 {
 	byte size;
 	char type;
