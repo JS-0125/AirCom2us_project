@@ -94,6 +94,18 @@ void send_packet(int p_id, void* p)
 	}
 }
 
+void send_login_ok_packet(int p_id, sc_packet_login_ok p)
+{
+	players[p_id]->level = p.LEVEL;
+	players[p_id]->exp = p.EXP;
+	players[p_id]->x = p.x;
+	players[p_id]->y = p.y;
+	p.type = SC_LOGIN_OK;
+	p.id = p_id;
+	p.size = sizeof(p);
+	send_packet(p_id, &p);
+}
+
 void send_move_packet(int c_id, int p_id)
 {
 	sc_packet_position p;
@@ -110,6 +122,8 @@ void send_move_packet(int c_id, int p_id)
 void do_move(int p_id, int x, int y)
 {
 	cout << x << ", " << y << endl;
+	players[p_id]->x = x;
+	players[p_id]->y = y;
 	send_move_packet(p_id, p_id);
 }
 
@@ -118,12 +132,25 @@ void process_packet(int p_id, unsigned char* p_buf)
 {
 	switch (p_buf[1]) {
 	case CS_LOGIN: {
-		cs_packet_login* packet = reinterpret_cast<cs_packet_login*>(p_buf);
+		cout << "CS Login" << endl;
+		//cs_packet_login* packet = reinterpret_cast<cs_packet_login*>(p_buf);
+		sc_packet_login_ok p;
+
+		// player 정보
+		// 추후 데이터베이스 생성 후 수정 필요
+		p.EXP = 100;
+		p.id = 0;
+		p.LEVEL = 1;
+		p.type = SC_POSITION;
+		p.x = 0;
+		p.y = 0;
+		p.size = sizeof(p);
+
+		send_login_ok_packet(p_id, p);
 		break;
 	}
 	case CS_MOVE: {
 		cs_packet_move* packet = reinterpret_cast<cs_packet_move*>(p_buf);
-		cout << "process packet - move" << endl;
 		players[p_id]->move_time = packet->move_time;
 		do_move(p_id, packet->x, packet->y);
 		break;

@@ -30,11 +30,13 @@ public enum SC
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class sc_packet_login_ok
 {
-	byte size;
-	char type;
-	int id;
-	short x, y;
-	int HP, LEVEL, EXP;
+	public byte size;
+	public byte type;
+	public int id;
+	public int x, y;
+	public int level, exp;
+
+	public sc_packet_login_ok() { }
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -47,11 +49,11 @@ public class sc_packet_login_fail
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class sc_packet_position
 {
-	byte size;
-	char type;
-	int id;
-	short x, y;
-	int move_time;          // Stress Test 프로그램에서 delay를 측정할 때 사용, 
+	public byte size;
+	public byte type;
+	public int id;
+	public int x, y;
+	public int move_time;          // Stress Test 프로그램에서 delay를 측정할 때 사용, 
 							// 서버는 해당 id가 접속한 클라이언트에서 보내온 최신 값을 return 해야 한다.
 };
 
@@ -59,7 +61,12 @@ public class sc_packet_position
 public class cs_packet_login
 {
 	byte size;
-	char type;
+	byte type;
+	public cs_packet_login(byte packet_size, byte packet_type)
+	{
+		size = packet_size;
+		type = packet_type;
+	}
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]

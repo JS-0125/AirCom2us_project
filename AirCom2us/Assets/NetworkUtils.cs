@@ -1,9 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Text;
 using UnityEngine;
 
 public static class NetworkUtils
@@ -18,6 +15,7 @@ public static class NetworkUtils
             Debug.Log("Connect OK");
         else
             Debug.Log("Connect Fail");
+
     }
 
     public static void SendMovePacket(Vector2 touchPos)
@@ -25,6 +23,18 @@ public static class NetworkUtils
         Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
 
         cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), (int)touchPos.x, (int)touchPos.y, 0);
+
+        byte[] packet = new byte[1];
+        StructToBytes(movePacket, ref packet);
+
+        tc.Client.Send(packet);
+    }
+
+    public static void SendLoginPacket()
+    {
+        Debug.Log("SendLoginPacket");
+
+        cs_packet_login movePacket = new cs_packet_login((byte)Marshal.SizeOf(typeof(cs_packet_login)), Convert.ToByte(CS.LOGIN));
 
         byte[] packet = new byte[1];
         StructToBytes(movePacket, ref packet);

@@ -7,9 +7,9 @@ constexpr int MAX_USER = 10000;
 #define CS_MOVE		1		// 클라이언트가 아바타기 이동을 서버에 요청
 #define CS_LOGOUT	2		// 클라이언트 종료
 
-#define SC_LOGIN_OK		1	// CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 수락
-#define SC_LOGIN_FAIL		2	// CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 거절
-#define SC_POSITION		3	// OBJECT의 위치 변경을 클라이언트에 통보
+#define SC_LOGIN_OK		0	// CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 수락
+#define SC_LOGIN_FAIL		1	// CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 거절
+#define SC_POSITION		2	// OBJECT의 위치 변경을 클라이언트에 통보
 
 #pragma pack(push ,1)
 
@@ -17,8 +17,8 @@ struct sc_packet_login_ok {
 	unsigned char size;
 	char type;
 	int id;
-	short	x, y;
-	int	HP, LEVEL, EXP;
+	int	x, y;
+	int LEVEL, EXP;
 };
 
 struct sc_packet_login_fail {
@@ -30,7 +30,7 @@ struct sc_packet_position {
 	unsigned char size;
 	char type;
 	int id;
-	short x, y;
+	int x, y;
 	int move_time;			// Stress Test 프로그램에서 delay를 측정할 때 사용, 
 					// 서버는 해당 id가 접속한 클라이언트에서 보내온 최신 값을 return 해야 한다.
 };
