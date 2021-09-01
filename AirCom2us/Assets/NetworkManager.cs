@@ -15,7 +15,7 @@ public class NetworkManager : MonoBehaviour
     private struct sc_data_event
     {
         public SC type;
-        public int x, y;
+        public float x, y;
     }
 
     private Queue<sc_data_event> scDataQueue = new Queue<sc_data_event>();

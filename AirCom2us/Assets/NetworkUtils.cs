@@ -22,7 +22,7 @@ public static class NetworkUtils
     {
         Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
 
-        cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), (int)touchPos.x, (int)touchPos.y, 0);
+        cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE),touchPos.x,touchPos.y, 0);
 
         byte[] packet = new byte[1];
         StructToBytes(movePacket, ref packet);

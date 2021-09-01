@@ -27,7 +27,7 @@ public class InputManager : MonoBehaviour
             // 터치된 손가락이 움직일 때
             else if (Input.GetTouch(0).phase == TouchPhase.Moved)
             {
-                currentPoint = Input.GetTouch(0).position;
+                currentPoint = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
                 NetworkUtils.SendMovePacket(currentPoint);
                 print("currentPoint Touched" + "x :" + currentPoint.x + "y : " + currentPoint.y);
             }

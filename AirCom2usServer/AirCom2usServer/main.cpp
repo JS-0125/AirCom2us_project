@@ -39,7 +39,7 @@ struct PLAYER
 	SOCKET m_socket;
 	int m_prev_size;
 	int move_time;
-	int x, y;
+	float x, y;
 };
 
 HANDLE h_iocp;
@@ -119,7 +119,7 @@ void send_move_packet(int c_id, int p_id)
 }
 
 
-void do_move(int p_id, int x, int y)
+void do_move(int p_id, float x, float y)
 {
 	cout << x << ", " << y << endl;
 	players[p_id]->x = x;

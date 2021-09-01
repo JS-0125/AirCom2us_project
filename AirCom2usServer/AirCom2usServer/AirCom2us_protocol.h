@@ -30,7 +30,7 @@ struct sc_packet_position {
 	unsigned char size;
 	char type;
 	int id;
-	int x, y;
+	float x, y;
 	int move_time;			// Stress Test 프로그램에서 delay를 측정할 때 사용, 
 					// 서버는 해당 id가 접속한 클라이언트에서 보내온 최신 값을 return 해야 한다.
 };
@@ -43,7 +43,7 @@ struct cs_packet_login {
 struct cs_packet_move {
 	unsigned char	size;
 	char	type;
-	int	x, y;		// 0:Up, 1:Down, 2:Left, 3:Right
+	float	x, y;
 	int move_time;
 };
 

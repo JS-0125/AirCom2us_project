@@ -52,7 +52,7 @@ public class sc_packet_position
 	public byte size;
 	public byte type;
 	public int id;
-	public int x, y;
+	public float x, y;
 	public int move_time;          // Stress Test 프로그램에서 delay를 측정할 때 사용, 
 							// 서버는 해당 id가 접속한 클라이언트에서 보내온 최신 값을 return 해야 한다.
 };
@@ -74,10 +74,10 @@ public class cs_packet_move
 {
 	byte size;
 	byte type;
-	int x, y;     // 0:Up, 1:Down, 2:Left, 3:Right
+	float x, y;     // 0:Up, 1:Down, 2:Left, 3:Right
 	int move_time;
 
-	public cs_packet_move (byte packet_size, byte packet_type, int posX, int posY, int current_time)
+	public cs_packet_move (byte packet_size, byte packet_type, float posX, float posY, int current_time)
     {
 		size = packet_size;
 		type = packet_type;
