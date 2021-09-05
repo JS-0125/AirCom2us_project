@@ -72,11 +72,11 @@ public class cs_packet_login
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class cs_packet_move
 {
-	byte size;
-	byte type;
-	float x, y;     // 0:Up, 1:Down, 2:Left, 3:Right
-	int move_time;
-
+	public byte size;
+	public byte type;
+	public float x, y;
+	public int move_time;
+	public cs_packet_move(){}
 	public cs_packet_move (byte packet_size, byte packet_type, float posX, float posY, int current_time)
     {
 		size = packet_size;

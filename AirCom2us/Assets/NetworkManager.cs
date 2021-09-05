@@ -54,6 +54,10 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        NetworkUtils.Disconnect();
+    }
 
     private void ListenForData()
     {
@@ -137,8 +141,13 @@ public class NetworkManager : MonoBehaviour
                     ev.type = SC.POSITION;
                     ev.x = ((sc_packet_position)packet).x;
                     ev.y = ((sc_packet_position)packet).y;
+
+                    Debug.Log("POSITION - " + ev.x + ", " + ev.y);
                     scDataQueue.Enqueue(ev);
                 }
+                break;
+            default:
+                Debug.Log("default - " + (int)packet_buffer[1]);
                 break;
         }
     }

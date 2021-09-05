@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -7,15 +8,22 @@ public static class NetworkUtils
 {
     public static TcpClient tc;
 
-    public static void Connect()
+    public static async void Connect()
     {
         // (1) IP 주소와 포트를 지정하고 TCP 연결 
-        tc = new TcpClient("127.0.0.1", 3500);
-        if(tc.Connected)
+        tc = new TcpClient();
+        await tc.ConnectAsync("192.168.42.94", 49152);
+
+        if (tc.Connected)
             Debug.Log("Connect OK");
         else
             Debug.Log("Connect Fail");
 
+    }
+
+    public static void Disconnect()
+    {
+        tc.Close();
     }
 
     public static void SendMovePacket(Vector2 touchPos)

@@ -1,6 +1,6 @@
 #pragma once
 
-#define SERVER_PORT		3500
+#define SERVER_PORT		49152
 constexpr int MAX_USER = 10000;
 
 #define CS_LOGIN		0		// 클라이언트가 서버에 접속 요청
@@ -15,7 +15,7 @@ constexpr int MAX_USER = 10000;
 
 struct sc_packet_login_ok {
 	unsigned char size;
-	char type;
+	unsigned char type;
 	int id;
 	int	x, y;
 	int LEVEL, EXP;
@@ -23,12 +23,12 @@ struct sc_packet_login_ok {
 
 struct sc_packet_login_fail {
 	unsigned char size;
-	char type;
+	unsigned char type;
 };
 
 struct sc_packet_position {
 	unsigned char size;
-	char type;
+	unsigned char type;
 	int id;
 	float x, y;
 	int move_time;			// Stress Test 프로그램에서 delay를 측정할 때 사용, 
@@ -37,19 +37,19 @@ struct sc_packet_position {
 
 struct cs_packet_login {
 	unsigned char	size;
-	char	type;
+	unsigned char	type;
 };
 
 struct cs_packet_move {
 	unsigned char	size;
-	char	type;
+	unsigned char	type;
 	float	x, y;
 	int move_time;
 };
 
 struct cs_packet_logout {
 	unsigned char	size;
-	char	type;
+	unsigned char	type;
 };
 
 #pragma pack (pop)

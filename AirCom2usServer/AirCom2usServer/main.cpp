@@ -121,9 +121,15 @@ void send_move_packet(int c_id, int p_id)
 
 void do_move(int p_id, float x, float y)
 {
-	cout << x << ", " << y << endl;
-	players[p_id]->x = x;
-	players[p_id]->y = y;
+	//cout << players[p_id]->x << " - " << x << ", " << players[p_id]->y << "- " << y << endl;
+	if (abs(x - players[p_id]->x) < 0.001 && abs(y - players[p_id]->y) < 0.001)
+		return;
+
+	float vecX = x - players[p_id]->x;
+	float vecY = y - players[p_id]->y;
+
+	players[p_id]->x += vecX * 0.2;
+	players[p_id]->y += vecY * 0.2;
 	send_move_packet(p_id, p_id);
 }
 
@@ -157,7 +163,7 @@ void process_packet(int p_id, unsigned char* p_buf)
 	}
 	default:
 		cout << "Unknown Packet Type from Client[" << p_id;
-		cout << "] Packet Type [" << p_buf[1] << "]";
+		cout << "] Packet Type [" << (int)p_buf[1] << "]";
 		while (true);
 	}
 }
