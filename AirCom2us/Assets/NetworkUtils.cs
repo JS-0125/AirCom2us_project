@@ -12,7 +12,7 @@ public static class NetworkUtils
     {
         // (1) IP 주소와 포트를 지정하고 TCP 연결 
         tc = new TcpClient();
-        await tc.ConnectAsync("192.168.42.94", 49152);
+        await tc.ConnectAsync("192.168.219.108", 49152);
 
         if (tc.Connected)
             Debug.Log("Connect OK");
@@ -32,25 +32,40 @@ public static class NetworkUtils
 
         cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE),touchPos.x,touchPos.y, 0);
 
-        byte[] packet = new byte[1];
-        StructToBytes(movePacket, ref packet);
+        SendPacket(ref movePacket);
+        //byte[] packet = new byte[1];
+        //StructToBytes(movePacket, ref packet);
 
-        tc.Client.Send(packet);
+        //tc.Client.Send(packet);
     }
 
     public static void SendLoginPacket()
     {
         Debug.Log("SendLoginPacket");
 
-        cs_packet_login movePacket = new cs_packet_login((byte)Marshal.SizeOf(typeof(cs_packet_login)), Convert.ToByte(CS.LOGIN));
+        cs_packet_login loginPacket = new cs_packet_login((byte)Marshal.SizeOf(typeof(cs_packet_login)), Convert.ToByte(CS.LOGIN));
 
+        SendPacket(ref loginPacket);
+    }
+
+    public static void SendCreateSessionPacket()
+    {
+        Debug.Log("SendCreateSessionPacket");
+
+        cs_packet_create_session createSessionPacket = new cs_packet_create_session((byte)Marshal.SizeOf(typeof(cs_packet_login)), Convert.ToByte(CS.CREATE_SESSION));
+
+        SendPacket(ref createSessionPacket);
+    }
+
+    private static void SendPacket<T>(ref T data)
+    {
         byte[] packet = new byte[1];
-        StructToBytes(movePacket, ref packet);
+        StructToBytes(data, ref packet);
 
         tc.Client.Send(packet);
     }
 
-    public static void StructToBytes(object obj, ref byte[] packet)
+    private static void StructToBytes(object obj, ref byte[] packet)
     {
         int size = Marshal.SizeOf(obj);
         packet = new byte[size];

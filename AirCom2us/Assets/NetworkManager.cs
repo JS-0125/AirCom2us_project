@@ -39,14 +39,21 @@ public class NetworkManager : MonoBehaviour
             {
                 case SC.LOGIN_OK:
                     {
-                        player.SetActive(true);
-                        player.transform.position = new Vector3(data.x, data.y, 0);
+                        Debug.Log("SC.LOGIN_OK");
+                        //player.SetActive(true);
+                        //player.transform.position = new Vector3(data.x, data.y, 0);
                     }
                     break;
                 case SC.LOGIN_FAIL:
                     break;
                 case SC.POSITION:
                     {
+                        player.transform.position = new Vector3(data.x, data.y, 0);
+                    }
+                    break;
+                case SC.SET_SESSION_OK:
+                    {
+                        player.SetActive(true);
                         player.transform.position = new Vector3(data.x, data.y, 0);
                     }
                     break;
@@ -146,8 +153,22 @@ public class NetworkManager : MonoBehaviour
                     scDataQueue.Enqueue(ev);
                 }
                 break;
+            case SC.SET_SESSION_OK:
+                {
+                    object packet = new sc_packet_position() as object;
+                    NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
+
+                    // Enqueue
+                    sc_data_event ev;
+                    ev.type = SC.SET_SESSION_OK;
+                    ev.x = 0;
+                    ev.y = 0;
+
+                    scDataQueue.Enqueue(ev);
+                }
+                break;
             default:
-                Debug.Log("default - " + (int)packet_buffer[1]);
+                Debug.Log("default - " + (SC)packet_buffer[1]);
                 break;
         }
     }

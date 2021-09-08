@@ -1,50 +1,12 @@
-#include <WS2tcpip.h>
-#include <MSWSock.h>
-#include <iostream>
-#include <vector>
-#include <thread>
-#include <atomic>
-#include <array>
+#include"default.h"
 #include"AirCom2us_protocol.h"
-
-
-#pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "MSWSock.lib")
-
-using namespace std;
-
-
-constexpr int SERVER_ID = 0;
-constexpr int MAX_BUFFER = 1024;
-
-enum OP_TYPE { OP_RECV, OP_SEND, OP_ACCEPT, OP_RANDOM_MOVE, OP_ATTACK, OP_CHASE, OP_POINT_MOVE, OP_DEAD, OP_RESPAWN };
-enum PLAYER_STATE { PLST_FREE, PLST_CONNECTED, PLST_INGAME };
-
-struct EX_OVER
-{
-	WSAOVERLAPPED	m_over;
-	WSABUF			m_wsabuf[1];
-	unsigned char	m_packetbuf[MAX_BUFFER];
-	OP_TYPE			m_op;
-	SOCKET			m_csocket;					// OP_ACCEPT에서만 사용
-};
-
-struct PLAYER
-{
-	atomic<PLAYER_STATE> m_state;
-	int		id;
-	EX_OVER m_recv_over;
-	short level;
-	int exp;
-	SOCKET m_socket;
-	int m_prev_size;
-	int move_time;
-	float x, y;
-};
+#include"Player.h"
+#include"Session.h"
 
 HANDLE h_iocp;
 
-array <PLAYER*, MAX_USER + 1> players;
+array <Player*, MAX_USER + 1> players;
+array <Session*, MAX_SESSION + 1> sessions;
 
 void display_error(const char* msg, int err_no)
 {
@@ -82,7 +44,7 @@ void send_packet(int p_id, void* p)
 	memcpy(s_over->m_packetbuf, p, p_size);
 	s_over->m_wsabuf[0].buf = reinterpret_cast<CHAR*>(s_over->m_packetbuf);
 	s_over->m_wsabuf[0].len = p_size;
-	int ret = WSASend((*static_cast<PLAYER*>(players[p_id])).m_socket, s_over->m_wsabuf, 1,
+	int ret = WSASend((*static_cast<Player*>(players[p_id])).m_socket, s_over->m_wsabuf, 1,
 		NULL, 0, &s_over->m_over, 0);
 	//cout << ret << reinterpret_cast<sc_packet_position*>(p)->id << " ";
 	if (0 != ret) {
@@ -106,6 +68,16 @@ void send_login_ok_packet(int p_id, sc_packet_login_ok p)
 	send_packet(p_id, &p);
 }
 
+void send_set_session_ok(int p_id)
+{
+	sc_packet_set_session_ok p;
+
+	p.type = SC_SET_SESSION_OK;
+	p.size = sizeof(p);
+	send_packet(p_id, &p);
+}
+
+
 void send_move_packet(int c_id, int p_id)
 {
 	sc_packet_position p;
@@ -114,7 +86,7 @@ void send_move_packet(int c_id, int p_id)
 	p.type = SC_POSITION;
 	p.x = players[p_id]->x;
 	p.y = players[p_id]->y;
-	p.move_time = (*static_cast<PLAYER*>(players[p_id])).move_time;
+	p.move_time = (*static_cast<Player*>(players[p_id])).move_time;
 	send_packet(c_id, &p);
 }
 
@@ -161,6 +133,10 @@ void process_packet(int p_id, unsigned char* p_buf)
 		do_move(p_id, packet->x, packet->y);
 		break;
 	}
+	case CS_CREATE_SESSION: {
+		send_set_session_ok(p_id);
+		break;
+	}
 	default:
 		cout << "Unknown Packet Type from Client[" << p_id;
 		cout << "] Packet Type [" << (int)p_buf[1] << "]";
@@ -172,11 +148,11 @@ void do_recv(int key)
 {
 	players[key]->m_recv_over.m_wsabuf[0].buf =
 		reinterpret_cast<char*>(players[key]->m_recv_over.m_packetbuf)
-		+ (*static_cast<PLAYER*>(players[key])).m_prev_size;
-	players[key]->m_recv_over.m_wsabuf[0].len = MAX_BUFFER - (*static_cast<PLAYER*>(players[key])).m_prev_size;
+		+ (*static_cast<Player*>(players[key])).m_prev_size;
+	players[key]->m_recv_over.m_wsabuf[0].len = MAX_BUFFER - (*static_cast<Player*>(players[key])).m_prev_size;
 	memset(&players[key]->m_recv_over.m_over, 0, sizeof(players[key]->m_recv_over.m_over));
 	DWORD r_flag = 0;
-	int ret = WSARecv((*static_cast<PLAYER*>(players[key])).m_socket, players[key]->m_recv_over.m_wsabuf, 1,
+	int ret = WSARecv((*static_cast<Player*>(players[key])).m_socket, players[key]->m_recv_over.m_wsabuf, 1,
 		NULL, &r_flag, &players[key]->m_recv_over.m_over, NULL);
 	if (0 != ret) {
 		int err_no = WSAGetLastError();
@@ -215,7 +191,7 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 
 		switch (ex_over->m_op) {
 		case OP_RECV: {
-			PLAYER* player = static_cast<PLAYER*>(players[key]);
+			Player* player = static_cast<Player*>(players[key]);
 
 			unsigned char* packet_ptr = ex_over->m_packetbuf;
 			int num_data = num_bytes + player->m_prev_size;
@@ -238,7 +214,7 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 		case OP_ACCEPT: {
 			cout << "accept" << endl;
 			int c_id = get_new_player_id(ex_over->m_csocket);
-			PLAYER* player = static_cast<PLAYER*>(players[c_id]);
+			Player* player = static_cast<Player*>(players[c_id]);
 
 			if (-1 != c_id) {
 				player->m_recv_over.m_op = OP_RECV;
@@ -266,11 +242,15 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 
 int main()
 {
-
 	for (int i = 0; i < MAX_USER + 1; ++i) {
-		auto& pl = players[i] = new PLAYER;
+		auto& pl = players[i] = new Player;
 		pl->id = i;
 		pl->m_state = PLST_FREE;
+	}
+
+	for (int i = 0; i < MAX_SESSION + 1; ++i) {
+		auto& session = sessions[i] = new Session;
+		session->CreateSession(i);
 	}
 
 	WSADATA WSAData;
