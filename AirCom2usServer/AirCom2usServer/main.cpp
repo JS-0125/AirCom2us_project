@@ -5,7 +5,7 @@
 
 HANDLE h_iocp;
 
-array <Player*, MAX_USER + 1> players;
+array <Object*, MAX_USER + 1> objects;
 array <Session*, MAX_SESSION + 1> sessions;
 
 void display_error(const char* msg, int err_no)
@@ -21,51 +21,91 @@ void display_error(const char* msg, int err_no)
 
 int get_new_player_id(SOCKET p_socket)
 {
-	for (int i = SERVER_ID + 1; i < MAX_USER; ++i) {
-		if (PLST_FREE == players[i]->m_state) {
-			players[i]->m_state = PLST_CONNECTED;
-			players[i]->m_socket = p_socket;
-
+	for (int i = SERVER_ID + 1; i < MAX_PLAYER_IDX + 1; ++i) {
+		if(reinterpret_cast<Player*>(objects[i])->isState(OBJST_FREE)){
+			reinterpret_cast<Player*>(objects[i])->Connected(p_socket);
 			return i;
 		}
 	}
 	return -1;
 }
 
-void send_packet(int p_id, void* p)
+int get_session_id(SESSION_STATE sessionState)
 {
-	int p_size = reinterpret_cast<unsigned char*>(p)[0];
-	int p_type = reinterpret_cast<unsigned char*>(p)[1];
-	//cout << "To client [" << p_id << "] : ";
-	//cout << "Packet [" << p_type << "]\n";
-	EX_OVER* s_over = new EX_OVER;
-	s_over->m_op = OP_SEND;
-	memset(&s_over->m_over, 0, sizeof(s_over->m_over));
-	memcpy(s_over->m_packetbuf, p, p_size);
-	s_over->m_wsabuf[0].buf = reinterpret_cast<CHAR*>(s_over->m_packetbuf);
-	s_over->m_wsabuf[0].len = p_size;
-	int ret = WSASend((*static_cast<Player*>(players[p_id])).m_socket, s_over->m_wsabuf, 1,
-		NULL, 0, &s_over->m_over, 0);
-	//cout << ret << reinterpret_cast<sc_packet_position*>(p)->id << " ";
-	if (0 != ret) {
-		int err_no = WSAGetLastError();
-		if (WSA_IO_PENDING != err_no) {
-			display_error("WSASend : ", WSAGetLastError());
-			//disconnect(p_id);
-		}
+	switch (sessionState)
+	{
+	case SESSION_OPEN: 
+	{
+		for (int i = 0; i < MAX_SESSION; ++i)
+			if (sessions[i]->sessionState == SESSION_STATE::SESSION_OPEN)
+				return i;
+		break;
+	}
+	case SESSION_CLOSE: 
+	{
+		for (int i = 0; i < MAX_SESSION; ++i)
+			if (sessions[i]->sessionState == SESSION_STATE::SESSION_CLOSE)
+				return i;
+		break;
+	}
+	case SESSION_INGAME: 
+	{
+		for (int i = 0; i < MAX_SESSION; ++i)
+			if (sessions[i]->sessionState == SESSION_STATE::SESSION_INGAME)
+				return i;
+		break;
+	}
+	default:
+		break;
 	}
 }
 
-void send_login_ok_packet(int p_id, sc_packet_login_ok p)
+int get_enemy_id(ENEMY_TYPE enemyType) {
+	switch (enemyType) {
+	case ENEMY_TYPE::ENEMY_Plane1:
+		for (int i = MAX_PLAYER_IDX + 1; i < MAX_PLANE1_IDX + 1; ++i)
+			if (objects[i]->m_state == OBJECT_STATE::OBJST_FREE)
+				return i;
+		break;
+	case ENEMY_TYPE::ENEMY_Plane2:
+		for (int i = MAX_PLANE1_IDX + 1; i < MAX_PLANE2_IDX + 1; ++i)
+			if (objects[i]->m_state == OBJECT_STATE::OBJST_FREE)
+				return i;
+		break;
+	case ENEMY_TYPE::ENEMY_Plane3:
+		for (int i = MAX_PLANE2_IDX + 1; i < MAX_PLANE3_IDX + 1; ++i)
+			if (objects[i]->m_state == OBJECT_STATE::OBJST_FREE)
+				return i;
+		break;
+	case ENEMY_TYPE::ENEMY_Boss1:
+		for (int i = MAX_PLANE3_IDX + 1; i < MAX_BOSS1_IDX + 1; ++i)
+			if (objects[i]->m_state == OBJECT_STATE::OBJST_FREE)
+				return i;
+		break;
+	case ENEMY_TYPE::ENEMY_Boss2:
+		for (int i = MAX_BOSS1_IDX+1; i < MAX_BOSS2_IDX+1; ++i)
+			if (objects[i]->m_state == OBJECT_STATE::OBJST_FREE)
+				return i;
+		break;
+	}
+}
+
+void send_login_ok_packet(int p_id)
 {
-	players[p_id]->level = p.LEVEL;
-	players[p_id]->exp = p.EXP;
-	players[p_id]->x = p.x;
-	players[p_id]->y = p.y;
-	p.type = SC_LOGIN_OK;
+	sc_packet_login_ok p;
+
+	// player 정보
+	// 추후 데이터베이스 생성 후 수정 필요
+	p.EXP = 100;
+	p.LEVEL = 1;
+	p.x = 0;
+	p.y = 0;
 	p.id = p_id;
+	p.type = SC_LOGIN_OK;
 	p.size = sizeof(p);
-	send_packet(p_id, &p);
+
+	reinterpret_cast<Player*>(objects[p_id])->Init(p.LEVEL, p.EXP, p.x, p.y);
+	reinterpret_cast<Player*>(objects[p_id])->Send(&p);
 }
 
 void send_set_session_ok(int p_id)
@@ -74,7 +114,8 @@ void send_set_session_ok(int p_id)
 
 	p.type = SC_SET_SESSION_OK;
 	p.size = sizeof(p);
-	send_packet(p_id, &p);
+
+	reinterpret_cast<Player*>(objects[p_id])->Send(&p);
 }
 
 
@@ -84,24 +125,37 @@ void send_move_packet(int c_id, int p_id)
 	p.id = p_id;
 	p.size = sizeof(p);
 	p.type = SC_POSITION;
-	p.x = players[p_id]->x;
-	p.y = players[p_id]->y;
-	p.move_time = (*static_cast<Player*>(players[p_id])).move_time;
-	send_packet(c_id, &p);
+	p.x = objects[p_id]->m_x;
+	p.y = objects[p_id]->m_y;
+	p.move_time = (*static_cast<Player*>(objects[p_id])).m_move_time;
+
+	reinterpret_cast<Player*>(objects[c_id])->Send(&p);
 }
 
+void send_add_obj_packet(int p_id, int obj_id)
+{
+	sc_packet_add_object p;
+
+	// player 정보
+	// 추후 데이터베이스 생성 후 수정 필요
+	p.id = obj_id;
+	p.type = SC_ADD_OBJECT;
+	p.size = sizeof(p);
+
+	reinterpret_cast<Player*>(objects[p_id])->Send(&p);
+}
 
 void do_move(int p_id, float x, float y)
 {
-	//cout << players[p_id]->x << " - " << x << ", " << players[p_id]->y << "- " << y << endl;
-	if (abs(x - players[p_id]->x) < 0.001 && abs(y - players[p_id]->y) < 0.001)
+	//cout << objects[p_id]->x << " - " << x << ", " << objects[p_id]->y << "- " << y << endl;
+	if (abs(x - objects[p_id]->m_x) < 0.001 && abs(y - objects[p_id]->m_y) < 0.001)
 		return;
 
-	float vecX = x - players[p_id]->x;
-	float vecY = y - players[p_id]->y;
+	float vecX = x - objects[p_id]->m_x;
+	float vecY = y - objects[p_id]->m_y;
 
-	players[p_id]->x += vecX * 0.2;
-	players[p_id]->y += vecY * 0.2;
+	objects[p_id]->m_x += vecX * 0.2;
+	objects[p_id]->m_y += vecY * 0.2;
 	send_move_packet(p_id, p_id);
 }
 
@@ -112,28 +166,44 @@ void process_packet(int p_id, unsigned char* p_buf)
 	case CS_LOGIN: {
 		cout << "CS Login" << endl;
 		//cs_packet_login* packet = reinterpret_cast<cs_packet_login*>(p_buf);
-		sc_packet_login_ok p;
 
-		// player 정보
-		// 추후 데이터베이스 생성 후 수정 필요
-		p.EXP = 100;
-		p.id = 0;
-		p.LEVEL = 1;
-		p.type = SC_POSITION;
-		p.x = 0;
-		p.y = 0;
-		p.size = sizeof(p);
-
-		send_login_ok_packet(p_id, p);
+		send_login_ok_packet(p_id);
 		break;
 	}
 	case CS_MOVE: {
 		cs_packet_move* packet = reinterpret_cast<cs_packet_move*>(p_buf);
-		players[p_id]->move_time = packet->move_time;
+		objects[p_id]->m_move_time = packet->move_time;
 		do_move(p_id, packet->x, packet->y);
 		break;
 	}
 	case CS_CREATE_SESSION: {
+		//session test
+		// session open
+		int closeSessionId = get_session_id(SESSION_STATE::SESSION_CLOSE);
+		sessions[closeSessionId]->OpenSession(1);
+
+		// open된 session에 setPlayer
+		int openSessionId = get_session_id(SESSION_STATE::SESSION_OPEN);
+		sessions[openSessionId]->SetPlayer(*static_cast<Player*>(objects[p_id]));
+
+		vector<ENEMY_TYPE> tmp;
+		tmp.push_back(ENEMY_TYPE::ENEMY_Plane1);
+		tmp.push_back(ENEMY_TYPE::ENEMY_Plane2);
+		tmp.push_back(ENEMY_TYPE::ENEMY_Plane3);
+
+		vector<int> enemyIds;
+
+		for (const auto& enemy : tmp) {
+			enemyIds.push_back(get_enemy_id(enemy));
+		}
+		
+		for (const auto& enemyId : enemyIds) {
+			cout << enemyId << endl;
+			send_add_obj_packet(p_id, enemyId);
+		}
+		
+		sessions[openSessionId]->SetSession(1, enemyIds);
+
 		send_set_session_ok(p_id);
 		break;
 	}
@@ -143,24 +213,6 @@ void process_packet(int p_id, unsigned char* p_buf)
 		while (true);
 	}
 }
-
-void do_recv(int key)
-{
-	players[key]->m_recv_over.m_wsabuf[0].buf =
-		reinterpret_cast<char*>(players[key]->m_recv_over.m_packetbuf)
-		+ (*static_cast<Player*>(players[key])).m_prev_size;
-	players[key]->m_recv_over.m_wsabuf[0].len = MAX_BUFFER - (*static_cast<Player*>(players[key])).m_prev_size;
-	memset(&players[key]->m_recv_over.m_over, 0, sizeof(players[key]->m_recv_over.m_over));
-	DWORD r_flag = 0;
-	int ret = WSARecv((*static_cast<Player*>(players[key])).m_socket, players[key]->m_recv_over.m_wsabuf, 1,
-		NULL, &r_flag, &players[key]->m_recv_over.m_over, NULL);
-	if (0 != ret) {
-		int err_no = WSAGetLastError();
-		if (WSA_IO_PENDING != err_no)
-			display_error("WSARecv : ", WSAGetLastError());
-	}
-}
-
 
 void worker(HANDLE h_iocp, SOCKET l_socket)
 {
@@ -191,7 +243,7 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 
 		switch (ex_over->m_op) {
 		case OP_RECV: {
-			Player* player = static_cast<Player*>(players[key]);
+			Player* player = static_cast<Player*>(objects[key]);
 
 			unsigned char* packet_ptr = ex_over->m_packetbuf;
 			int num_data = num_bytes + player->m_prev_size;
@@ -205,7 +257,8 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 			player->m_prev_size = num_data;
 			if (0 != num_data)
 				memcpy(ex_over->m_packetbuf, packet_ptr, num_data);
-			do_recv(key);
+			player->Recv();
+			//do_recv(key);
 			break;
 		}
 		case OP_SEND:
@@ -214,17 +267,14 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 		case OP_ACCEPT: {
 			cout << "accept" << endl;
 			int c_id = get_new_player_id(ex_over->m_csocket);
-			Player* player = static_cast<Player*>(players[c_id]);
+			Player* player = static_cast<Player*>(objects[c_id]);
 
 			if (-1 != c_id) {
-				player->m_recv_over.m_op = OP_RECV;
-				player->m_prev_size = 0;
-				CreateIoCompletionPort(
-					reinterpret_cast<HANDLE>(player->m_socket), h_iocp, c_id, 0);
-				do_recv(c_id);
+				player->PlayerAccept(h_iocp, c_id);
+				player->Recv();
 			}
 			else {
-				closesocket(player->m_socket);
+				player->CloseSocket();
 			}
 
 			memset(&ex_over->m_over, 0, sizeof(ex_over->m_over));
@@ -243,9 +293,30 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 int main()
 {
 	for (int i = 0; i < MAX_USER + 1; ++i) {
-		auto& pl = players[i] = new Player;
-		pl->id = i;
-		pl->m_state = PLST_FREE;
+		if (i < MAX_PLAYER_IDX + 1) {
+			auto& obj = objects[i] = new Player;
+			obj->m_id = i;
+		}
+		else if (i < MAX_PLANE1_IDX + 1) {
+			auto& obj = objects[i] = new Plane1;
+			obj->m_id = i;
+		}
+		else if (i < MAX_PLANE2_IDX + 1) {
+			auto& obj = objects[i] = new Plane2;
+			obj->m_id = i;
+		}
+		else if (i < MAX_PLANE3_IDX + 1) {
+			auto& obj = objects[i] = new Plane3;
+			obj->m_id = i;
+		}
+		else if (i < MAX_BOSS1_IDX + 1) {
+			auto& obj = objects[i] = new Boss1;
+			obj->m_id = i;
+		}
+		else if (i < MAX_BOSS2_IDX + 1) {
+			auto& obj = objects[i] = new Boss2;
+			obj->m_id = i;
+		}
 	}
 
 	for (int i = 0; i < MAX_SESSION + 1; ++i) {

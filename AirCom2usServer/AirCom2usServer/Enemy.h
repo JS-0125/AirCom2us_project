@@ -1,16 +1,18 @@
 #pragma once
 #include <chrono>
+#include"Object.h"
+
 using namespace std;
 using namespace chrono;
 
 enum ENEMY_TYPE { ENEMY_Plane1, ENEMY_Plane2, ENEMY_Plane3, ENEMY_Boss1, ENEMY_Boss2 };
+enum ENEMY_STATE { ENEMY_FREE, ENEMY_INGAME };
 
-class Enemy
+class Enemy: public Object
 {
-private:
-	float x, y;
 public:
-	Enemy() {}
+	ENEMY_STATE type = ENEMY_FREE;
+
 	virtual void CreateEnemy(float x, float y) {};
 };
 

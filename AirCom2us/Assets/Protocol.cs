@@ -1,6 +1,15 @@
 using System.Runtime.InteropServices;
 
-//public enum SERVER_PORT 3500;
+public enum OBJECT_ID_IDX
+{
+    MAX_USER = 100000,
+    MAX_PLAYER_IDX = 10000,
+    MAX_PLANE1_IDX = 30000,
+    MAX_PLANE2_IDX = 50000,
+    MAX_PLANE3_IDX = 70000,
+    MAX_BOSS1_IDX = 85000,
+    MAX_BOSS2_IDX = 100000,
+}
 
 
 public enum CS
@@ -17,6 +26,7 @@ public enum SC
     LOGIN_FAIL,  // CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 거절
     POSITION,   // OBJECT의 위치 변경을 클라이언트에 통보
 	SET_SESSION_OK,
+	ADD_OBJECT,
 }
 
 
@@ -64,6 +74,15 @@ public class sc_packet_set_session_ok
 {
 	public byte size;
 	public byte type;
+};
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+
+public class sc_packet_add_object
+{
+	public byte size;
+	public byte type;
+	public int id;
 };
 
 

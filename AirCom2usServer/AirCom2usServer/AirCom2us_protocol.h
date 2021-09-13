@@ -1,9 +1,14 @@
 #pragma once
 
-
-
 #define SERVER_PORT		49152
-constexpr int MAX_USER = 10000;
+constexpr int MAX_USER = 100000;
+constexpr int MAX_PLAYER_IDX = 10000;
+constexpr int MAX_PLANE1_IDX = 30000;
+constexpr int MAX_PLANE2_IDX = 50000;
+constexpr int MAX_PLANE3_IDX = 70000;
+constexpr int MAX_BOSS1_IDX = 85000;
+constexpr int MAX_BOSS2_IDX = 100000;
+
 constexpr int MAX_SESSION = 10000;
 
 #define CS_LOGIN		0		// 클라이언트가 서버에 접속 요청
@@ -15,6 +20,7 @@ constexpr int MAX_SESSION = 10000;
 #define SC_LOGIN_FAIL		1	// CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 거절
 #define SC_POSITION		2	// OBJECT의 위치 변경을 클라이언트에 통보
 #define SC_SET_SESSION_OK	3		
+#define SC_ADD_OBJECT	4		
 
 
 #pragma pack(push ,1)
@@ -44,6 +50,12 @@ struct sc_packet_position {
 struct sc_packet_set_session_ok {
 	unsigned char size;
 	unsigned char type;
+};
+
+struct sc_packet_add_object {
+	unsigned char size;
+	unsigned char type;
+	int id;
 };
 
 struct cs_packet_login {

@@ -2,27 +2,39 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Threading;
 using UnityEngine;
 
 public class NetworkManager : MonoBehaviour
 {
     private static Thread thrdClientReceive;
-    [SerializeField] private GameObject player;
     private int saved_packet_size = 0;
     private Byte[] packet_buffer = new Byte[1024];
 
+    [SerializeField] private GameObject player;
+    [SerializeField] private ObjectManager objectManager;
     private struct sc_data_event
     {
         public SC type;
+        public byte[] data;
+    }
+
+    private struct data_position
+    {
         public float x, y;
+    }
+
+    private struct data_add_obejct
+    {
+        public int id;
     }
 
     private Queue<sc_data_event> scDataQueue = new Queue<sc_data_event>();
 
-    void Start()
+    public void StartNetworking(string ip)
     {
-        NetworkUtils.Connect();
+        NetworkUtils.Connect(ip);
         NetworkUtils.SendLoginPacket();
 
         thrdClientReceive = new Thread(new ThreadStart(ListenForData));
@@ -48,15 +60,24 @@ public class NetworkManager : MonoBehaviour
                     break;
                 case SC.POSITION:
                     {
-                        player.transform.position = new Vector3(data.x, data.y, 0);
+                        object position = new data_position() as object;
+                        NetworkUtils.BytesToStructure(data.data, ref position, typeof(data_position));
+                        player.transform.position = new Vector3(((data_position)position).x, ((data_position)position).y, 0);
                     }
                     break;
                 case SC.SET_SESSION_OK:
                     {
                         player.SetActive(true);
-                        player.transform.position = new Vector3(data.x, data.y, 0);
+                        player.transform.position = new Vector3(0, 0, 0);
                     }
                     break;
+                case SC.ADD_OBJECT:
+                    {
+                        object obj = new data_add_obejct() as object;
+                        NetworkUtils.BytesToStructure(data.data, ref obj, typeof(data_add_obejct));
+                        objectManager.AddObject(((data_add_obejct)obj).id);
+                        break;
+                    }
             }
         }
     }
@@ -89,7 +110,6 @@ public class NetworkManager : MonoBehaviour
             Debug.Log(ex);
         }
     }
-
 
     private void ProcessData(byte[] buffer, int io_byte)
     {
@@ -131,8 +151,8 @@ public class NetworkManager : MonoBehaviour
                     // Enqueue
                     sc_data_event ev;
                     ev.type = SC.LOGIN_OK;
-                    ev.x = ((sc_packet_login_ok)packet).x;
-                    ev.y = ((sc_packet_login_ok)packet).y;
+                    ev.data = new byte[1];
+
                     scDataQueue.Enqueue(ev);
                 }
                 break;
@@ -146,10 +166,14 @@ public class NetworkManager : MonoBehaviour
                     // Enqueue
                     sc_data_event ev;
                     ev.type = SC.POSITION;
-                    ev.x = ((sc_packet_position)packet).x;
-                    ev.y = ((sc_packet_position)packet).y;
+                    ev.data = new byte[1];
 
-                    Debug.Log("POSITION - " + ev.x + ", " + ev.y);
+                    data_position data = new data_position();
+                    data.x = ((sc_packet_position)packet).x;
+                    data.y = ((sc_packet_position)packet).y;
+
+                    NetworkUtils.StructToBytes(data, ref ev.data);
+
                     scDataQueue.Enqueue(ev);
                 }
                 break;
@@ -161,8 +185,24 @@ public class NetworkManager : MonoBehaviour
                     // Enqueue
                     sc_data_event ev;
                     ev.type = SC.SET_SESSION_OK;
-                    ev.x = 0;
-                    ev.y = 0;
+                    ev.data = new byte[1];
+
+                    scDataQueue.Enqueue(ev);
+                }
+                break;
+            case SC.ADD_OBJECT:
+                {
+                    object packet = new sc_packet_add_object() as object;
+                    NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
+
+                    // Enqueue
+                    sc_data_event ev;
+                    ev.type = SC.ADD_OBJECT;
+                    ev.data = new byte[1];
+
+                    data_add_obejct data = new data_add_obejct();
+                    data.id = ((sc_packet_add_object)packet).id;
+                    NetworkUtils.StructToBytes(data, ref ev.data);
 
                     scDataQueue.Enqueue(ev);
                 }

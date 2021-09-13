@@ -8,11 +8,11 @@ public static class NetworkUtils
 {
     public static TcpClient tc;
 
-    public static async void Connect()
+    public static async void Connect(string ip)
     {
         // (1) IP 주소와 포트를 지정하고 TCP 연결 
         tc = new TcpClient();
-        await tc.ConnectAsync("192.168.219.108", 49152);
+        await tc.ConnectAsync(ip, 49152);
 
         if (tc.Connected)
             Debug.Log("Connect OK");
@@ -65,7 +65,7 @@ public static class NetworkUtils
         tc.Client.Send(packet);
     }
 
-    private static void StructToBytes(object obj, ref byte[] packet)
+    public static void StructToBytes(object obj, ref byte[] packet)
     {
         int size = Marshal.SizeOf(obj);
         packet = new byte[size];

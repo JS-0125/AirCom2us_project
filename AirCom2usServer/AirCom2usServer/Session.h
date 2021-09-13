@@ -2,59 +2,41 @@
 #include"Player.h"
 #include"Enemy.h"
 
-enum SESSION_STATE { SESSION_OPEN, SESSION_CLOSE };
+enum SESSION_STATE { SESSION_OPEN, SESSION_CLOSE, SESSION_INGAME };
 class Session
 {
 private:
-	SESSION_STATE sessionState = SESSION_STATE::SESSION_CLOSE;
-	int m_sessionID;
-	int m_playersCnt;
-	int m_enemysCnt;
+	int m_sessionID = -1; // 필요 없을 수도? 밖에서 배열로 관리하고 있기 때문에
+	int m_playersCnt = 0;
+	int m_enemysCnt = 0;
 	Player*m_players;
-	Enemy *m_enemys;
+	vector<int> m_enemyIds;
+	int m_setPlayerCnt = 0;
 
 public:
+	SESSION_STATE sessionState = SESSION_STATE::SESSION_CLOSE;
+
 	~Session() {
 		if (m_players != nullptr)
 			delete[] m_players;
-
-		if (m_enemys != nullptr)
-			delete[] m_enemys;
 	}
 
 	void CreateSession(int id) { m_sessionID = id; }
 
-	void SetSession(int playersCnt, int enemysCnt, vector<Player> players, vector<ENEMY_TYPE> enemyTypes){
-		m_enemysCnt = enemysCnt;
+	void OpenSession(int playersCnt) {
+		sessionState = SESSION_STATE::SESSION_OPEN;
+
 		m_playersCnt = playersCnt;
-
 		m_players = new Player[m_playersCnt];
-		for (int i = 0; i < m_playersCnt; ++i)
-			m_players[i] = players[i];
+	}
 
-		m_enemys = new Enemy[m_enemysCnt];
-		for (int i = 0; i < m_enemysCnt; ++i) {
-			switch (enemyTypes[i])
-			{
-			case ENEMY_Plane1:
-				m_enemys[i] = *new Plane1;
-				break;
-			case ENEMY_Plane2:
-				m_enemys[i] = *new Plane2;
-				break;
-			case ENEMY_Plane3:
-				m_enemys[i] = *new Plane3;
-				break;
-			case ENEMY_Boss1:
-				m_enemys[i] = *new Boss1;
-				break;
-			case ENEMY_Boss2:
-				m_enemys[i] = *new Boss2;
-				break;
-			default:
-				break;
-			}
-		}
+	void SetPlayer(Player& player) {
+		m_players[m_setPlayerCnt++] = player;
+	}
+
+	void SetSession(int enemysCnt, vector<int> enemyIds){
+		m_enemysCnt = enemysCnt;
+		m_enemyIds = enemyIds;
 	}
 
 	void CloseSession() {
