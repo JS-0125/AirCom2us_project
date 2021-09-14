@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 
 using Input = InputWrapper.Input;
 
-public class InputManager : MonoBehaviour
+public class PlayerInput : MonoBehaviour
 {
     private Vector2 startPoint;
     private Vector2 endPoint;

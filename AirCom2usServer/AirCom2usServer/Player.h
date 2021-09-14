@@ -11,6 +11,7 @@ private:
 
 public:
 	int m_prev_size;
+	int m_sessionId;
 
 	Player() {
 		m_state = OBJECT_STATE::OBJST_FREE;

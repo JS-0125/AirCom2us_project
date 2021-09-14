@@ -1,32 +1,39 @@
 #pragma once
-#include <chrono>
+#include "default.h"
 #include"Object.h"
 
-using namespace std;
 using namespace chrono;
 
 enum ENEMY_TYPE { ENEMY_Plane1, ENEMY_Plane2, ENEMY_Plane3, ENEMY_Boss1, ENEMY_Boss2 };
-enum ENEMY_STATE { ENEMY_FREE, ENEMY_INGAME };
 
 class Enemy: public Object
 {
+private:
 public:
-	ENEMY_STATE type = ENEMY_FREE;
-
 	virtual void CreateEnemy(float x, float y) {};
+	virtual void Move( int& time) {};
 };
 
 class Plane1 : public Enemy {
 public:
 	 void CreateEnemy(float x, float y) override {}
-	 void Move(float& x, float& y, float& time) {
-		 y -= (duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count() - time) * 0.1;
+	 void Move(int& time) override {
+		 cout << m_x << ", " << m_y;
+		 cout << "time: " << time << ", m_movetime: " << m_move_time << endl;;
+		 auto delTime = time - m_move_time;
+		 m_y -= delTime * 0.001;
+		 m_move_time = time;
 	 }
 };
 
 class Plane2 : public Enemy {
 public:
 	void CreateEnemy(float x, float y) override {}
+	void Move(int& time) override {
+		auto delTime = time - m_move_time;
+		m_y -= delTime * 0.1;
+		m_move_time = time;
+	}
 };
 
 class Plane3 : public Enemy {
@@ -35,6 +42,11 @@ private:
 
 public:
 	void CreateEnemy(float x, float y) override {}
+	void Move(int& time) override {
+		auto delTime = time - m_move_time;
+		m_y -= delTime * 0.1;
+		m_move_time = time;
+	}
 };
 
 class Boss1 : public Enemy {

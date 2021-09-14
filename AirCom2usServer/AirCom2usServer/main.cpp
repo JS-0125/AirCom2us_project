@@ -5,8 +5,23 @@
 
 HANDLE h_iocp;
 
+
+struct TIMER_EVENT {
+	int object;
+	OP_TYPE e_type;
+	chrono::system_clock::time_point start_time;
+	int target_id;
+
+	constexpr bool operator < (const TIMER_EVENT& L) const
+	{
+		return (start_time > L.start_time);
+	}
+};
+
 array <Object*, MAX_USER + 1> objects;
 array <Session*, MAX_SESSION + 1> sessions;
+priority_queue <TIMER_EVENT> timer_queue;
+mutex timer_l;
 
 void display_error(const char* msg, int err_no)
 {
@@ -17,6 +32,18 @@ void display_error(const char* msg, int err_no)
 	cout << msg;
 	wcout << lpMsgBuf << endl;
 	LocalFree(lpMsgBuf);
+}
+
+void add_event(int obj, int target_id, OP_TYPE ev_t, int delay_ms)
+{
+	TIMER_EVENT ev;
+	ev.e_type = ev_t;
+	ev.object = obj;
+	ev.start_time = system_clock::now() + milliseconds(delay_ms);
+	ev.target_id = target_id;
+	timer_l.lock();
+	timer_queue.push(ev);
+	timer_l.unlock();
 }
 
 int get_new_player_id(SOCKET p_socket)
@@ -108,26 +135,26 @@ void send_login_ok_packet(int p_id)
 	reinterpret_cast<Player*>(objects[p_id])->Send(&p);
 }
 
-void send_set_session_ok(int p_id)
+void send_set_session_ok(int p_id, int sessionId)
 {
 	sc_packet_set_session_ok p;
 
 	p.type = SC_SET_SESSION_OK;
 	p.size = sizeof(p);
+	p.sessionId = sessionId;
 
 	reinterpret_cast<Player*>(objects[p_id])->Send(&p);
 }
 
-
-void send_move_packet(int c_id, int p_id)
+void send_move_packet(int c_id, int move_id)
 {
 	sc_packet_position p;
-	p.id = p_id;
+	p.id = move_id;
 	p.size = sizeof(p);
 	p.type = SC_POSITION;
-	p.x = objects[p_id]->m_x;
-	p.y = objects[p_id]->m_y;
-	p.move_time = (*static_cast<Player*>(objects[p_id])).m_move_time;
+	p.x = objects[move_id]->m_x;
+	p.y = objects[move_id]->m_y;
+	p.move_time = (*static_cast<Player*>(objects[move_id])).m_move_time;
 
 	reinterpret_cast<Player*>(objects[c_id])->Send(&p);
 }
@@ -159,7 +186,6 @@ void do_move(int p_id, float x, float y)
 	send_move_packet(p_id, p_id);
 }
 
-
 void process_packet(int p_id, unsigned char* p_buf)
 {
 	switch (p_buf[1]) {
@@ -186,6 +212,9 @@ void process_packet(int p_id, unsigned char* p_buf)
 		int openSessionId = get_session_id(SESSION_STATE::SESSION_OPEN);
 		sessions[openSessionId]->SetPlayer(*static_cast<Player*>(objects[p_id]));
 
+		// session id 플레이어에 할당
+		static_cast<Player*>(objects[p_id])->m_sessionId = openSessionId;
+
 		vector<ENEMY_TYPE> tmp;
 		tmp.push_back(ENEMY_TYPE::ENEMY_Plane1);
 		tmp.push_back(ENEMY_TYPE::ENEMY_Plane2);
@@ -194,23 +223,67 @@ void process_packet(int p_id, unsigned char* p_buf)
 		vector<int> enemyIds;
 
 		for (const auto& enemy : tmp) {
-			enemyIds.push_back(get_enemy_id(enemy));
+			int objId = get_enemy_id(enemy);
+			enemyIds.push_back(objId);
+			objects[objId]->m_state = OBJECT_STATE::OBJST_INGAME;
+			objects[objId]->m_move_time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
+			send_add_obj_packet(p_id, objId);
+			add_event(objId, p_id, OP_POINT_MOVE, 100);
 		}
 		
-		for (const auto& enemyId : enemyIds) {
-			cout << enemyId << endl;
-			send_add_obj_packet(p_id, enemyId);
-		}
-		
-		sessions[openSessionId]->SetSession(1, enemyIds);
+		sessions[openSessionId]->SetSession(3, enemyIds);
 
-		send_set_session_ok(p_id);
+		send_set_session_ok(p_id, openSessionId);
+
 		break;
 	}
 	default:
 		cout << "Unknown Packet Type from Client[" << p_id;
 		cout << "] Packet Type [" << (int)p_buf[1] << "]";
 		while (true);
+	}
+}
+
+
+void do_timer()
+{
+	using namespace chrono;
+
+	for (;;) {
+		timer_l.lock();
+		if ((false == timer_queue.empty())
+			&& (timer_queue.top().start_time <= system_clock::now())) {
+			TIMER_EVENT ev = timer_queue.top();
+			timer_queue.pop();
+			timer_l.unlock();
+			if (ev.e_type == OP_POINT_MOVE) {
+				EX_OVER* ex_over = new EX_OVER;
+				ex_over->m_op = OP_POINT_MOVE;
+				*reinterpret_cast<int*>(ex_over->m_packetbuf) = ev.target_id;
+				PostQueuedCompletionStatus(h_iocp, 1, ev.object, &ex_over->m_over);
+			}
+			else if (ev.e_type == OP_CHASE) {
+				EX_OVER* ex_over = new EX_OVER;
+				ex_over->m_op = OP_CHASE;
+				*reinterpret_cast<int*>(ex_over->m_packetbuf) = ev.target_id;
+				PostQueuedCompletionStatus(h_iocp, 1, ev.object, &ex_over->m_over);
+			}
+			else if (ev.e_type == OP_ATTACK) {
+				EX_OVER* ex_over = new EX_OVER;
+				ex_over->m_op = OP_ATTACK;
+				*reinterpret_cast<int*> (ex_over->m_packetbuf) = ev.target_id;
+				PostQueuedCompletionStatus(h_iocp, 1, ev.object, &ex_over->m_over);
+			}
+			else if (ev.e_type == OP_RESPAWN) {
+				EX_OVER* ex_over = new EX_OVER;
+				ex_over->m_op = OP_RESPAWN;
+				PostQueuedCompletionStatus(h_iocp, 1, ev.object, &ex_over->m_over);
+			}
+		}
+		else {
+			timer_l.unlock();
+			this_thread::sleep_for(10ms);
+		}
 	}
 }
 
@@ -285,6 +358,15 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 
 			break;
 		}
+		case OP_POINT_MOVE: {
+			auto& enemy = *static_cast<Enemy*>(objects[key]);
+			int time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
+			enemy.Move(time);
+			int playerId = *reinterpret_cast<int*>(ex_over->m_packetbuf);
+			send_move_packet(playerId, key);
+			add_event(key, playerId, OP_POINT_MOVE, 100);
+			break;
+		}
 		}
 	}
 }
@@ -355,6 +437,9 @@ int main()
 	vector <thread> worker_threads;
 	for (int i = 0; i < 4; ++i)
 		worker_threads.emplace_back(worker, h_iocp, listenSocket);
+
+	thread timer_thread{ do_timer };
+	timer_thread.join();
 
 	for (auto& th : worker_threads)
 		th.join();

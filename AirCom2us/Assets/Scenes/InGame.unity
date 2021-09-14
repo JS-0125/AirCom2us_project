@@ -234,6 +234,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 1453103235}
   objectManager: {fileID: 230333245}
+  playerId: 0
+  sessionId: 0
 --- !u!4 &230333244
 Transform:
   m_ObjectHideFlags: 0
@@ -262,6 +264,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Objects:
   - {fileID: 8793979326826498305, guid: 21dba990f8d428a42bdec2c02ac9ede6, type: 3}
+  - {fileID: 3331866492062833840, guid: 1d6b56c070156c94382272c1c434bff7, type: 3}
   - {fileID: 4782722056059942680, guid: 9ebeeeb4eff79104d961a638462cf6b8, type: 3}
   - {fileID: 7840096877531798112, guid: a1f20d5b313902e489f0aa0c959ed7b9, type: 3}
   - {fileID: 2871195211769082057, guid: 0b370a56825045742a97731667983daa, type: 3}

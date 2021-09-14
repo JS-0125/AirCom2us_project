@@ -50,6 +50,7 @@ struct sc_packet_position {
 struct sc_packet_set_session_ok {
 	unsigned char size;
 	unsigned char type;
+	int sessionId;
 };
 
 struct sc_packet_add_object {

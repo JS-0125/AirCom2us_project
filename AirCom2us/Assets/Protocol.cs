@@ -74,6 +74,7 @@ public class sc_packet_set_session_ok
 {
 	public byte size;
 	public byte type;
+	public int sessionId;
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
