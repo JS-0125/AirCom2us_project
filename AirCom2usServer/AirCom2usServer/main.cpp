@@ -215,23 +215,19 @@ void process_packet(int p_id, unsigned char* p_buf)
 		// session id 플레이어에 할당
 		static_cast<Player*>(objects[p_id])->m_sessionId = openSessionId;
 
-		vector<ENEMY_TYPE> tmp;
-		tmp.push_back(ENEMY_TYPE::ENEMY_Plane1);
-		tmp.push_back(ENEMY_TYPE::ENEMY_Plane2);
-		tmp.push_back(ENEMY_TYPE::ENEMY_Plane3);
+		sessions[openSessionId]->SetSession(0);
 
-		vector<int> enemyIds;
+		for (const auto& enemyData : sessions[openSessionId]->m_enemyDatas) {
+			int objId = get_enemy_id(enemyData.type);
 
-		for (const auto& enemy : tmp) {
-			int objId = get_enemy_id(enemy);
-			enemyIds.push_back(objId);
 			objects[objId]->m_state = OBJECT_STATE::OBJST_INGAME;
-			objects[objId]->m_move_time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
+			objects[objId]->m_move_time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()+ enemyData.time);
+			objects[objId]->m_x = enemyData.x;
+			objects[objId]->m_y = enemyData.y;
+
 			send_add_obj_packet(p_id, objId);
-			add_event(objId, p_id, OP_POINT_MOVE, 100);
+			add_event(objId, p_id, OP_POINT_MOVE, enemyData.time);
 		}
-		
-		sessions[openSessionId]->SetSession(3, enemyIds);
 
 		send_set_session_ok(p_id, openSessionId);
 
@@ -364,7 +360,9 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 			enemy.Move(time);
 			int playerId = *reinterpret_cast<int*>(ex_over->m_packetbuf);
 			send_move_packet(playerId, key);
-			add_event(key, playerId, OP_POINT_MOVE, 100);
+
+			if (enemy.m_y > -10)
+				add_event(key, playerId, OP_POINT_MOVE, 50);
 			break;
 		}
 		}

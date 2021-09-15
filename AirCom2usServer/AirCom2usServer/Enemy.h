@@ -18,22 +18,16 @@ class Plane1 : public Enemy {
 public:
 	 void CreateEnemy(float x, float y) override {}
 	 void Move(int& time) override {
-		 cout << m_x << ", " << m_y;
-		 cout << "time: " << time << ", m_movetime: " << m_move_time << endl;;
+		 //cout << m_x << ", " << m_y;
+		 //cout << "time: " << time << ", m_movetime: " << m_move_time << endl;;
 		 auto delTime = time - m_move_time;
 		 m_y -= delTime * 0.001;
 		 m_move_time = time;
 	 }
 };
 
-class Plane2 : public Enemy {
+class Plane2 : public Plane1 {
 public:
-	void CreateEnemy(float x, float y) override {}
-	void Move(int& time) override {
-		auto delTime = time - m_move_time;
-		m_y -= delTime * 0.1;
-		m_move_time = time;
-	}
 };
 
 class Plane3 : public Enemy {
@@ -44,7 +38,8 @@ public:
 	void CreateEnemy(float x, float y) override {}
 	void Move(int& time) override {
 		auto delTime = time - m_move_time;
-		m_y -= delTime * 0.1;
+		m_x = (2 * sin(time*0.001));
+		m_y -= delTime * 0.001;
 		m_move_time = time;
 	}
 };

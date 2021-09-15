@@ -9,7 +9,15 @@
 #include <mutex>
 #include<queue>
 #include <chrono>
+#include<string>
 
+extern "C" {
+#include"lua.h"
+#include "lauxlib.h"
+#include"lualib.h"
+}
+
+#pragma comment( lib, "lua54.lib" )
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "MSWSock.lib")
 
