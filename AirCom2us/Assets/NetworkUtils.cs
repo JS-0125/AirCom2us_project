@@ -28,7 +28,7 @@ public static class NetworkUtils
 
     public static void SendMovePacket(Vector2 touchPos)
     {
-        Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
+        //Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
 
         cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE),touchPos.x,touchPos.y, 0);
 
@@ -48,11 +48,11 @@ public static class NetworkUtils
         SendPacket(ref loginPacket);
     }
 
-    public static void SendCreateSessionPacket()
+    public static void SendCreateSessionPacket(int sessionType)
     {
         Debug.Log("SendCreateSessionPacket");
 
-        cs_packet_create_session createSessionPacket = new cs_packet_create_session((byte)Marshal.SizeOf(typeof(cs_packet_login)), Convert.ToByte(CS.CREATE_SESSION));
+        cs_packet_create_session createSessionPacket = new cs_packet_create_session((byte)Marshal.SizeOf(typeof(cs_packet_create_session)), Convert.ToByte(CS.CREATE_SESSION), sessionType);
 
         SendPacket(ref createSessionPacket);
     }

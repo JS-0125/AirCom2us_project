@@ -129,11 +129,13 @@ public class cs_packet_create_session
 {
 	byte size;
 	byte type;
+	int sessionType;
 	// 어떤 스테이지인지 확인할 수 있는 변수 추가 가능
 
-	public cs_packet_create_session(byte packet_size, byte packet_type)
+	public cs_packet_create_session(byte packet_size, byte packet_type, int packet_sessionType)
 	{
 		size = packet_size;
 		type = packet_type;
+		sessionType = packet_sessionType;
 	}
 };

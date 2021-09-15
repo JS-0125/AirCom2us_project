@@ -17,7 +17,7 @@ private:
 	int m_sessionID = -1; // 필요 없을 수도? 밖에서 배열로 관리하고 있기 때문에
 	int m_playersCnt = 0;
 	int m_enemysCnt = 0;
-	Player*m_players;
+	Player *m_players;
 	int m_setPlayerCnt = 0;
 	lua_State* L;
 	mutex m_sl;
@@ -97,6 +97,7 @@ private:
 public:
 	vector<SessionData> m_enemyDatas;
 	SESSION_STATE sessionState = SESSION_STATE::SESSION_CLOSE;
+	int m_sessionType = -1;
 
 	~Session() {
 		if (m_players != nullptr)
@@ -129,14 +130,21 @@ public:
 
 		m_playersCnt = playersCnt;
 		m_players = new Player[m_playersCnt];
+		m_sessionType = playersCnt;
+
+		cout << "m_playersCnt - " << m_playersCnt << endl;
 	}
 
 	void SetPlayer(Player& player) {
 		m_players[m_setPlayerCnt++] = player;
+		if (m_setPlayerCnt == m_playersCnt)
+			SetSession();
 	}
 
-	void SetSession(int session) {
-		GetSessionDatas(session);
+	void SetSession() {
+		// lua에서 가져올 데이터 결정
+		GetSessionDatas(0);
+		sessionState = SESSION_STATE::SESSION_INGAME;
 	}
 
 	void SetSession(int enemysCnt, vector<SessionData> enemyDatas){
@@ -144,6 +152,23 @@ public:
 		m_enemyDatas = enemyDatas;
 	}
 
+	void StartSession(Object *enemy) {
+
+	}
+
+	bool CheckSession() {
+		if (m_setPlayerCnt == m_playersCnt)
+			return true;
+		return false;
+	}
+
+	vector<int> getPlayerId() {
+		vector<int> tmp;
+		for (int i = 0; i < m_playersCnt; ++i)
+			tmp.push_back(m_players[i].m_id);
+
+		return tmp;
+	}
 
 	void CloseSession() {
 		sessionState = SESSION_STATE::SESSION_CLOSE;

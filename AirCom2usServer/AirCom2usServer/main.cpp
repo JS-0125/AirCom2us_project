@@ -57,14 +57,14 @@ int get_new_player_id(SOCKET p_socket)
 	return -1;
 }
 
-int get_session_id(SESSION_STATE sessionState)
+int get_session_id(SESSION_STATE sessionState, int sessionType)
 {
 	switch (sessionState)
 	{
 	case SESSION_OPEN: 
 	{
 		for (int i = 0; i < MAX_SESSION; ++i)
-			if (sessions[i]->sessionState == SESSION_STATE::SESSION_OPEN)
+			if (sessions[i]->sessionState == SESSION_STATE::SESSION_OPEN && sessions[i]->m_sessionType == sessionType)
 				return i;
 		break;
 	}
@@ -83,8 +83,10 @@ int get_session_id(SESSION_STATE sessionState)
 		break;
 	}
 	default:
+		return -1;
 		break;
 	}
+	return -1;
 }
 
 int get_enemy_id(ENEMY_TYPE enemyType) {
@@ -183,7 +185,43 @@ void do_move(int p_id, float x, float y)
 
 	objects[p_id]->m_x += vecX * 0.2;
 	objects[p_id]->m_y += vecY * 0.2;
-	send_move_packet(p_id, p_id);
+	if (sessions[static_cast<Player*>(objects[p_id])->m_sessionId]->sessionState == SESSION_STATE::SESSION_INGAME) {
+		auto sessionPlayers =  sessions[static_cast<Player*>(objects[p_id])->m_sessionId]->getPlayerId();
+		for(const auto& player : sessionPlayers)
+			send_move_packet(player, p_id);
+	}
+}
+
+void checkSession(int sessionId) {
+	if (!sessions[sessionId]->CheckSession())
+		return;
+	auto sessionPlayers = sessions[sessionId]->getPlayerId();
+
+	for (const auto& enemyData : sessions[sessionId]->m_enemyDatas) {
+		int objId = get_enemy_id(enemyData.type);
+		//sessions[openSessionId]->StartSession(objects[objId]);
+
+		objects[objId]->m_state = OBJECT_STATE::OBJST_INGAME;
+		objects[objId]->m_move_time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count() + enemyData.time);
+		objects[objId]->m_x = enemyData.x;
+		objects[objId]->m_y = enemyData.y;
+
+		add_event(objId, -1, OP_POINT_MOVE, enemyData.time);
+		for (int i = 0; i < sessionPlayers.size(); ++i) {
+			send_add_obj_packet(sessionPlayers[i], objId);
+			add_event(objId, sessionPlayers[i], OP_ENEMY_SEND, enemyData.time + 100);
+		}
+	}
+
+	for (int i = 0; i < sessionPlayers.size(); ++i) {
+		for (int j = 0; j < sessionPlayers.size(); ++j) 
+			if(sessionPlayers[i] != sessionPlayers[j])
+				send_add_obj_packet(sessionPlayers[i], sessionPlayers[j]);
+	}
+
+	for (int i = 0; i < sessionPlayers.size(); ++i) 
+		send_set_session_ok(sessionPlayers[i], sessionId);
+	
 }
 
 void process_packet(int p_id, unsigned char* p_buf)
@@ -203,33 +241,33 @@ void process_packet(int p_id, unsigned char* p_buf)
 		break;
 	}
 	case CS_CREATE_SESSION: {
-		//session test
-		// session open
-		int closeSessionId = get_session_id(SESSION_STATE::SESSION_CLOSE);
-		sessions[closeSessionId]->OpenSession(1);
+		cs_packet_create_session* packet = reinterpret_cast<cs_packet_create_session*>(p_buf);
 
-		// open된 session에 setPlayer
-		int openSessionId = get_session_id(SESSION_STATE::SESSION_OPEN);
-		sessions[openSessionId]->SetPlayer(*static_cast<Player*>(objects[p_id]));
+		// open된 session 없음, session 새로 open
+		cout << "session type - " << packet->sessionType << endl;
+		int openSessionId = get_session_id(SESSION_STATE::SESSION_OPEN, packet->sessionType);
+		if (openSessionId < 0) {
+			// session open
+			cout << "new session open" << endl;
+			int closeSessionId = get_session_id(SESSION_STATE::SESSION_CLOSE, packet->sessionType);
+			sessions[closeSessionId]->OpenSession(packet->sessionType);
+			sessions[closeSessionId]->SetPlayer(*static_cast<Player*>(objects[p_id]));
 
-		// session id 플레이어에 할당
-		static_cast<Player*>(objects[p_id])->m_sessionId = openSessionId;
+			// session id 플레이어에 할당
+			static_cast<Player*>(objects[p_id])->m_sessionId = closeSessionId;
 
-		sessions[openSessionId]->SetSession(0);
-
-		for (const auto& enemyData : sessions[openSessionId]->m_enemyDatas) {
-			int objId = get_enemy_id(enemyData.type);
-
-			objects[objId]->m_state = OBJECT_STATE::OBJST_INGAME;
-			objects[objId]->m_move_time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count()+ enemyData.time);
-			objects[objId]->m_x = enemyData.x;
-			objects[objId]->m_y = enemyData.y;
-
-			send_add_obj_packet(p_id, objId);
-			add_event(objId, p_id, OP_POINT_MOVE, enemyData.time);
+			checkSession(closeSessionId);
 		}
+		else {
+			// open된 session에 setPlayer
+			cout << "join session" << endl;
+			sessions[openSessionId]->SetPlayer(*static_cast<Player*>(objects[p_id]));
 
-		send_set_session_ok(p_id, openSessionId);
+			// session id 플레이어에 할당
+			static_cast<Player*>(objects[p_id])->m_sessionId = openSessionId;
+
+			checkSession(openSessionId);
+		}
 
 		break;
 	}
@@ -258,21 +296,10 @@ void do_timer()
 				*reinterpret_cast<int*>(ex_over->m_packetbuf) = ev.target_id;
 				PostQueuedCompletionStatus(h_iocp, 1, ev.object, &ex_over->m_over);
 			}
-			else if (ev.e_type == OP_CHASE) {
+			else if (ev.e_type == OP_ENEMY_SEND) {
 				EX_OVER* ex_over = new EX_OVER;
-				ex_over->m_op = OP_CHASE;
+				ex_over->m_op = OP_ENEMY_SEND;
 				*reinterpret_cast<int*>(ex_over->m_packetbuf) = ev.target_id;
-				PostQueuedCompletionStatus(h_iocp, 1, ev.object, &ex_over->m_over);
-			}
-			else if (ev.e_type == OP_ATTACK) {
-				EX_OVER* ex_over = new EX_OVER;
-				ex_over->m_op = OP_ATTACK;
-				*reinterpret_cast<int*> (ex_over->m_packetbuf) = ev.target_id;
-				PostQueuedCompletionStatus(h_iocp, 1, ev.object, &ex_over->m_over);
-			}
-			else if (ev.e_type == OP_RESPAWN) {
-				EX_OVER* ex_over = new EX_OVER;
-				ex_over->m_op = OP_RESPAWN;
 				PostQueuedCompletionStatus(h_iocp, 1, ev.object, &ex_over->m_over);
 			}
 		}
@@ -358,11 +385,20 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 			auto& enemy = *static_cast<Enemy*>(objects[key]);
 			int time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
 			enemy.Move(time);
+			
+			if (enemy.m_y > -10) 
+				add_event(key, -1, OP_POINT_MOVE, 50);
+			break;
+		}
+		case OP_ENEMY_SEND: {
+			auto& enemy = *static_cast<Enemy*>(objects[key]);
+			int time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
 			int playerId = *reinterpret_cast<int*>(ex_over->m_packetbuf);
-			send_move_packet(playerId, key);
 
-			if (enemy.m_y > -10)
-				add_event(key, playerId, OP_POINT_MOVE, 50);
+			if (enemy.m_y > -10) {
+				add_event(key, playerId, OP_ENEMY_SEND, 50);
+				send_move_packet(playerId, key);
+			}
 			break;
 		}
 		}

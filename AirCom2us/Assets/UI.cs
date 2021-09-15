@@ -5,9 +5,14 @@ using UnityEngine.UI;
 
 public class UI : MonoBehaviour
 {
-    public void CreateSession()
+    public void CreateSessionSolo()
     {
-        NetworkUtils.SendCreateSessionPacket();
+        NetworkUtils.SendCreateSessionPacket(1);
+    }
+
+    public void CreateSessionMulti()
+    {
+        NetworkUtils.SendCreateSessionPacket(2);
     }
 
     public void Join()

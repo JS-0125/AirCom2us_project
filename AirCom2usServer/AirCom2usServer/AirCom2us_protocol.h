@@ -79,6 +79,7 @@ struct cs_packet_logout {
 struct cs_packet_create_session {
 	unsigned char	size;
 	unsigned char	type;
+	int sessionType;
 	// 어떤 스테이지인지 확인할 수 있는 변수 추가 가능
 };
 

@@ -18,7 +18,7 @@ public class PlayerInput : MonoBehaviour
             switch (touch.phase)
             {
                 case TouchPhase.Began:
-                    Debug.Log("TouchPhase Began!");
+                    //Debug.Log("TouchPhase Began!");
                     startPoint = touch.position;
                     break;
                 case TouchPhase.Moved:
@@ -27,22 +27,22 @@ public class PlayerInput : MonoBehaviour
                     NetworkUtils.SendMovePacket(Camera.main.ScreenToWorldPoint(touch.position));
                     break;
                 case TouchPhase.Stationary:
-                    Debug.Log("TouchPhase Stationary!");
+                    //Debug.Log("TouchPhase Stationary!");
                     if (Mathf.Abs(currentPoint.x - touch.position.x) < 0.001 
                         && Mathf.Abs(currentPoint.y - touch.position.y) < 0.001) 
                     {
-                        Debug.Log("currentPoint == Input.GetTouch(0).position - don't send");
+                        //Debug.Log("currentPoint == Input.GetTouch(0).position - don't send");
                         return;
                     }
                     currentPoint = touch.position;
                     NetworkUtils.SendMovePacket(Camera.main.ScreenToWorldPoint(touch.position));
                     break;
                 case TouchPhase.Ended:
-                    Debug.Log("TouchPhase Ended!");
+                    //Debug.Log("TouchPhase Ended!");
                     endPoint = touch.position;
                     break;
                 case TouchPhase.Canceled:
-                    Debug.Log("TouchPhase Canceled!");
+                    //Debug.Log("TouchPhase Canceled!");
                     break;
             }
             }
