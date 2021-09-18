@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -9,8 +10,10 @@ using UnityEngine;
 public class NetworkManager : MonoBehaviour
 {
     private static Thread thrdClientReceive;
+    private static Thread thrdUdpClientReceive;
+
     private int saved_packet_size = 0;
-    private Byte[] packet_buffer = new Byte[1024];
+    private Byte[] packet_buffer = new Byte[2048];
 
     [SerializeField] private GameObject player;
     [SerializeField] private ObjectManager objectManager;
@@ -38,11 +41,20 @@ public class NetworkManager : MonoBehaviour
     public void StartNetworking(string ip)
     {
         NetworkUtils.Connect(ip);
+
+        Debug.Log(" tc - " + NetworkUtils.tc.Client.ToString());
         NetworkUtils.SendLoginPacket();
 
         thrdClientReceive = new Thread(new ThreadStart(ListenForData));
         thrdClientReceive.IsBackground = true;
         thrdClientReceive.Start();
+
+        NetworkUtils.UdpConnect(ip);
+        Debug.Log(" uc - " + NetworkUtils.uc.Client.ToString());
+
+        thrdUdpClientReceive = new Thread(new ThreadStart(UdpListenForData));
+        thrdUdpClientReceive.IsBackground = true;
+        thrdUdpClientReceive.Start();
     }
 
     private void Update()
@@ -121,6 +133,15 @@ public class NetworkManager : MonoBehaviour
         catch (SocketException ex)
         {
             Debug.Log(ex);
+        }
+    }
+
+    private void UdpListenForData()
+    {
+        while (true)
+        {
+            var data = NetworkUtils.uc.ReceiveAsync();
+            ProcessUdpPacket(data.Result.Buffer);
         }
     }
 
@@ -231,6 +252,39 @@ public class NetworkManager : MonoBehaviour
                 break;
             default:
                 Debug.Log("default - " + (SC)packet_buffer[1]);
+                break;
+        }
+    }
+
+    private void ProcessUdpPacket(byte[] bytes)
+    {
+        switch ((SC)bytes[1])
+        {
+            case SC.POSITION:
+                {
+                    Debug.Log("udp - " + (SC)bytes[1]);
+
+                    object packet = new sc_packet_position() as object;
+                    NetworkUtils.BytesToStructure(bytes, ref packet, packet.GetType());
+
+                    // Enqueue
+                    sc_data_event ev;
+                    ev.type = SC.POSITION;
+                    ev.data = new byte[1];
+
+                    data_position data = new data_position();
+                    data.id = ((sc_packet_position)packet).id;
+                    data.x = ((sc_packet_position)packet).x;
+                    data.y = ((sc_packet_position)packet).y;
+
+                    NetworkUtils.StructToBytes(data, ref ev.data);
+
+                    scDataQueue.Enqueue(ev);
+                }
+                break;
+         
+            default:
+                Debug.Log("default - " + (SC)bytes[1]);
                 break;
         }
     }

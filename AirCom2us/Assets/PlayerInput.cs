@@ -24,7 +24,10 @@ public class PlayerInput : MonoBehaviour
                 case TouchPhase.Moved:
                     //Debug.Log("TouchPhase Moved!" + currentPoint.x +", " + currentPoint.y);
                     currentPoint = touch.position;
-                    NetworkUtils.SendMovePacket(Camera.main.ScreenToWorldPoint(touch.position));
+                    //NetworkUtils.SendMovePacket(Camera.main.ScreenToWorldPoint(touch.position));
+                    var worldPos = Camera.main.ScreenToWorldPoint(touch.position);
+                    NetworkUtils.UdpSendMovePacket(worldPos);
+                    this.gameObject.transform.position = new Vector3(worldPos.x, worldPos.y, 0);
                     break;
                 case TouchPhase.Stationary:
                     //Debug.Log("TouchPhase Stationary!");
@@ -35,7 +38,8 @@ public class PlayerInput : MonoBehaviour
                         return;
                     }
                     currentPoint = touch.position;
-                    NetworkUtils.SendMovePacket(Camera.main.ScreenToWorldPoint(touch.position));
+                    //NetworkUtils.SendMovePacket(Camera.main.ScreenToWorldPoint(touch.position));
+                    NetworkUtils.UdpSendMovePacket(Camera.main.ScreenToWorldPoint(touch.position));
                     break;
                 case TouchPhase.Ended:
                     //Debug.Log("TouchPhase Ended!");

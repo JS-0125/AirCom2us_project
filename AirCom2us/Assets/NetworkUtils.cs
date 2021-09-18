@@ -7,18 +7,30 @@ using UnityEngine;
 public static class NetworkUtils
 {
     public static TcpClient tc;
+    public static UdpClient uc;
+    private static string networkIp;
+    private static int port= 49152;
+    private static int udpPort= 49151;
 
     public static async void Connect(string ip)
     {
+        networkIp = ip;
         // (1) IP 주소와 포트를 지정하고 TCP 연결 
         tc = new TcpClient();
-        await tc.ConnectAsync(ip, 49152);
+        await tc.ConnectAsync(networkIp, port);
 
         if (tc.Connected)
             Debug.Log("Connect OK");
         else
             Debug.Log("Connect Fail");
 
+    }
+
+    public static void UdpConnect(string ip)
+    {
+        uc = new UdpClient();
+        //uc.Connect(ip, 49152);
+        // 나중에 멀티캐스트나 브로드캐스트 하기
     }
 
     public static void Disconnect()
@@ -37,6 +49,15 @@ public static class NetworkUtils
         //StructToBytes(movePacket, ref packet);
 
         //tc.Client.Send(packet);
+    }
+
+    public static void UdpSendMovePacket(Vector2 touchPos)
+    {
+        Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
+
+        cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, 0);
+
+        UdpSendPacket(ref movePacket);
     }
 
     public static void SendLoginPacket()
@@ -63,6 +84,14 @@ public static class NetworkUtils
         StructToBytes(data, ref packet);
 
         tc.Client.Send(packet);
+    }
+
+    private static void UdpSendPacket<T>(ref T data)
+    {
+        byte[] packet = new byte[1];
+        StructToBytes(data, ref packet);
+
+        uc.Send(packet, Marshal.SizeOf(data), networkIp, udpPort);
     }
 
     public static void StructToBytes(object obj, ref byte[] packet)

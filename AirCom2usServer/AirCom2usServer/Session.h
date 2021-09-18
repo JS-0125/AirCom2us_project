@@ -40,13 +40,12 @@ private:
 			// "0" 키에 해당하는 2차 테이블을 Lua -> stack으로 읽어오기.
 			lua_gettable(L, 1);
 
-			// "0"의 property 중 HP를 읽어오기 위해 "HP"키를 스택에 푸쉬
+			// "0"의 property 중 type를 읽어오기 위해 "type"키를 스택에 푸쉬
 			lua_pushstring(L, "type");
-			// "type"에 해당하는 500 값을 Lua -> stack으로 읽어오기.
+			// "type"에 해당하는 값을 Lua -> stack으로 읽어오기.
 			// "type" 키로 얻은 2차 테이블은 스택 인덱스 2에 있다.
 			lua_gettable(L, 2);
 
-			// 얻어온 값을 적당한 타입으로 캐스팅 후 사용하자.
 			SessionData data;
 			data.type = (ENEMY_TYPE)lua_tonumber(L, -1);
 
@@ -85,9 +84,12 @@ private:
 		{
 		case 0:
 			GetSessionTable("enemys0");
-			for (int i = 0; i < m_enemyDatas.size(); ++i) 
-				cout << "time: " << m_enemyDatas[i].time << " type: " << m_enemyDatas[i].type 
-				<< " " << m_enemyDatas[i].x << ", " << m_enemyDatas[i].y << endl;
+			break;
+		case 1:
+			GetSessionTable("enemys1");
+			break;
+		case 2:
+			GetSessionTable("enemys2");
 			break;
 		default:
 			cout << "session is not exist" << endl;

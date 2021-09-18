@@ -406,6 +406,30 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 }
 
 
+void udpWorker(SOCKET l_socket) {
+	SOCKET c_socket;
+	int nClient_Size = sizeof(SOCKADDR_IN);
+	SOCKADDR_IN m_ClientInfo;
+
+	int retVal = 0;
+	int nRecvLen = 0;
+	char Buffer[1024] = { 0, };
+
+	while (1)
+	{ // Recv 대기. Send한 Client 정보 저장 
+		cout << "while udp"<< endl;
+
+		nRecvLen = recvfrom(l_socket, reinterpret_cast<char*>(Buffer),
+			1024, 0, (SOCKADDR*)&m_ClientInfo, &nClient_Size);
+
+		if (nRecvLen > 0)
+		{
+			// RECV 성공 시 MSG 처리.. 
+			cout << "udp recv completed " + (int)Buffer[1] << endl;
+		}
+	}
+}
+
 int main()
 {
 	for (int i = 0; i < MAX_USER + 1; ++i) {
@@ -468,15 +492,51 @@ int main()
 			display_error("AcceptEx Error", err_num);
 	}
 
+
+	// UDP
+
+	SOCKET m_ServerSocket;
+	SOCKADDR_IN m_ServerInfo;
+
+	int retVal = 0;
+
+	// WSADATA wsa; // Winsock 데이터 구조체
+
+	//WS2_32.DLL 초기화 
+	/*if (WSAStartup(MAKEWORD(2, 2), &wsa) == SOCKET_ERROR)
+	{
+		WSACleanup(); return -1;
+	}*/
+
+	// UDP Socket 생성 (SOCK_DGRAM : UDP) 
+	m_ServerSocket = socket(AF_INET, SOCK_DGRAM, 0);
+
+	m_ServerInfo.sin_family = AF_INET; // IPv4 
+	m_ServerInfo.sin_addr.s_addr = htonl(INADDR_ANY); //Local 
+	m_ServerInfo.sin_port = htons(49151);
+
+	retVal = bind(m_ServerSocket, (struct sockaddr*)&m_ServerInfo, sizeof(SOCKADDR_IN));
+
+	if (retVal == SOCKET_ERROR)
+		return -1;
+
 	vector <thread> worker_threads;
 	for (int i = 0; i < 4; ++i)
 		worker_threads.emplace_back(worker, h_iocp, listenSocket);
 
 	thread timer_thread{ do_timer };
+	thread udpWorker_thread{ udpWorker,m_ServerSocket };
+
+	udpWorker_thread.join();
 	timer_thread.join();
 
 	for (auto& th : worker_threads)
 		th.join();
+
+	
+	closesocket(m_ServerSocket);
+	WSACleanup();
+
 	closesocket(listenSocket);
 	WSACleanup();
 }
