@@ -106,15 +106,18 @@ public class cs_packet_move
 	public byte type;
 	public float x, y;
 	public int move_time;
+	public int m_id;
 	public cs_packet_move(){}
-	public cs_packet_move (byte packet_size, byte packet_type, float posX, float posY, int current_time)
+	public cs_packet_move (byte packet_size, byte packet_type, float posX, float posY, int current_time, int id)
     {
 		size = packet_size;
 		type = packet_type;
 		x = posX;
 		y = posY;
 		move_time = current_time;
-    }
+		m_id = id;
+
+	}
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]

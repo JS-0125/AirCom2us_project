@@ -15,9 +15,10 @@ public class NetworkManager : MonoBehaviour
     private int saved_packet_size = 0;
     private Byte[] packet_buffer = new Byte[2048];
 
+    public int playerId;
+
     [SerializeField] private GameObject player;
     [SerializeField] private ObjectManager objectManager;
-    [SerializeField] private int playerId;
     [SerializeField] private int sessionId;
     private struct sc_data_event
     {
@@ -48,8 +49,11 @@ public class NetworkManager : MonoBehaviour
         thrdClientReceive = new Thread(new ThreadStart(ListenForData));
         thrdClientReceive.IsBackground = true;
         thrdClientReceive.Start();
+    }
 
-        NetworkUtils.UdpConnect(ip);
+    public void StartUdpNetworking()
+    {
+        NetworkUtils.UdpJoinMulticast();
         Debug.Log(" uc - " + NetworkUtils.uc.Client.ToString());
 
         thrdUdpClientReceive = new Thread(new ThreadStart(UdpListenForData));
@@ -140,10 +144,14 @@ public class NetworkManager : MonoBehaviour
     {
         while (true)
         {
+            Debug.Log("UdpListenForData");
             var data = NetworkUtils.uc.ReceiveAsync();
+            Debug.Log("data.Result.Buffer.Length - " + data.Result.Buffer.Length);
+
             ProcessUdpPacket(data.Result.Buffer);
         }
     }
+
 
     private void ProcessData(byte[] buffer, int io_byte)
     {
@@ -258,13 +266,13 @@ public class NetworkManager : MonoBehaviour
 
     private void ProcessUdpPacket(byte[] bytes)
     {
-        switch ((SC)bytes[1])
+        switch ((CS)bytes[1])
         {
-            case SC.POSITION:
+            case CS.MOVE:
                 {
-                    Debug.Log("udp - " + (SC)bytes[1]);
+                    Debug.Log("udp - " + (CS)bytes[1]);
 
-                    object packet = new sc_packet_position() as object;
+                    object packet = new cs_packet_move() as object;
                     NetworkUtils.BytesToStructure(bytes, ref packet, packet.GetType());
 
                     // Enqueue
@@ -273,16 +281,15 @@ public class NetworkManager : MonoBehaviour
                     ev.data = new byte[1];
 
                     data_position data = new data_position();
-                    data.id = ((sc_packet_position)packet).id;
-                    data.x = ((sc_packet_position)packet).x;
-                    data.y = ((sc_packet_position)packet).y;
+                    data.id = ((cs_packet_move)packet).m_id;
+                    data.x = ((cs_packet_move)packet).x;
+                    data.y = ((cs_packet_move)packet).y;
 
                     NetworkUtils.StructToBytes(data, ref ev.data);
 
                     scDataQueue.Enqueue(ev);
                 }
                 break;
-         
             default:
                 Debug.Log("default - " + (SC)bytes[1]);
                 break;

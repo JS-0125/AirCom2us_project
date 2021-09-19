@@ -11,7 +11,9 @@ public static class NetworkUtils
     private static string networkIp;
     private static int port= 49152;
     private static int udpPort= 49151;
-
+    private static IPEndPoint remoteEP;
+    private static IPAddress multicastIP;
+    private static IPEndPoint localEP;
     public static async void Connect(string ip)
     {
         networkIp = ip;
@@ -33,6 +35,24 @@ public static class NetworkUtils
         // 나중에 멀티캐스트나 브로드캐스트 하기
     }
 
+    public static void UdpJoinMulticast()
+    {
+        // (1) UdpClient 객체 성성
+        uc = new UdpClient(udpPort);
+
+        // (2) UDP 로컬 IP/포트에 바인딩            
+        // udp.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.ReuseAddress, true);
+        //localEP = new IPEndPoint(IPAddress.Any, udpPort);
+        //uc.Client.Bind(localEP);
+
+        // (3) Multicast 그룹에 Join
+        multicastIP = IPAddress.Parse("229.1.1.229");
+        uc.JoinMulticastGroup(multicastIP);
+
+        remoteEP = new IPEndPoint(multicastIP, udpPort);
+    }
+
+
     public static void Disconnect()
     {
         tc.Close();
@@ -42,20 +62,20 @@ public static class NetworkUtils
     {
         //Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
 
-        cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE),touchPos.x,touchPos.y, 0);
+        //cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE),touchPos.x,touchPos.y, 0);
 
-        SendPacket(ref movePacket);
+        //SendPacket(ref movePacket);
         //byte[] packet = new byte[1];
         //StructToBytes(movePacket, ref packet);
 
         //tc.Client.Send(packet);
     }
 
-    public static void UdpSendMovePacket(Vector2 touchPos)
+    public static void UdpSendMovePacket(Vector2 touchPos, int id)
     {
         Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
 
-        cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, 0);
+        cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, 0, id);
 
         UdpSendPacket(ref movePacket);
     }
@@ -88,10 +108,15 @@ public static class NetworkUtils
 
     private static void UdpSendPacket<T>(ref T data)
     {
+        if (uc == null)
+        {
+            Debug.Log("udp is null");
+            return;
+        }
         byte[] packet = new byte[1];
         StructToBytes(data, ref packet);
 
-        uc.Send(packet, Marshal.SizeOf(data), networkIp, udpPort);
+        uc.Send(packet, Marshal.SizeOf(data), remoteEP);
     }
 
     public static void StructToBytes(object obj, ref byte[] packet)
