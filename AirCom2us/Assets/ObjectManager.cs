@@ -85,6 +85,6 @@ public class ObjectManager : MonoBehaviour
     {
         for(int i = 0; i < InGameObjects.Count; ++i)
             if(InGameObjects[i].id == id)
-                InGameObjects[i].gameObject.transform.position = new Vector3(x, y, 0);
+                InGameObjects[i].newPos = new Vector3(x, y, 0);
     }
 }

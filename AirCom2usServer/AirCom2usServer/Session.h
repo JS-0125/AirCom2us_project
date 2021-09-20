@@ -8,7 +8,7 @@ enum SESSION_STATE { SESSION_OPEN, SESSION_CLOSE, SESSION_INGAME };
 struct SessionData {
 	ENEMY_TYPE type;
 	int time;
-	int x, y;
+	queue<int> x, y;
 };
 
 class Session
@@ -34,6 +34,8 @@ private:
 		cout << m_enemysCnt << endl;
 
 		for (int i = 0; i < m_enemysCnt; ++i) {
+			SessionData data;
+
 			// "0" 키를 스택에 푸쉬
 			lua_pushstring(L, (to_string(i)).c_str());
 
@@ -46,7 +48,6 @@ private:
 			// "type" 키로 얻은 2차 테이블은 스택 인덱스 2에 있다.
 			lua_gettable(L, 2);
 
-			SessionData data;
 			data.type = (ENEMY_TYPE)lua_tonumber(L, -1);
 
 			// 다 사용하였으면 스택에서 값 제거
@@ -58,16 +59,35 @@ private:
 			data.time = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 
+			//positions
 			// x
 			lua_pushstring(L, "x");
 			lua_gettable(L, 2);
-			data.x = lua_tonumber(L, -1);
+			
+			size_t len = lua_rawlen(L, -1);
+			cout << "x len - " << len << endl;
+			for (int i = 1; i < len+1; ++i) {
+				lua_rawgeti(L, -1, i); 
+				int x = lua_tonumber(L, -1);
+				data.x.push(x);
+				cout << "x - " << x << endl;
+				lua_pop(L, 1);
+			}
 			lua_pop(L, 1);
 
 			//y
 			lua_pushstring(L, "y");
 			lua_gettable(L, 2);
-			data.y = lua_tonumber(L, -1);
+
+			len = lua_rawlen(L, -1);
+			cout << "y len - " << len << endl;
+			for (int i = 1; i < len + 1; ++i) {
+				lua_rawgeti(L, -1, i);
+				int y = lua_tonumber(L, -1);
+				data.y.push(y);
+				cout << "y - " << y << endl;
+				lua_pop(L, 1);
+			}
 			lua_pop(L, 1);
 
 			m_enemyDatas.push_back(data);

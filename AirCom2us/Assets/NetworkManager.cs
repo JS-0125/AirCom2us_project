@@ -144,9 +144,9 @@ public class NetworkManager : MonoBehaviour
     {
         while (true)
         {
-            Debug.Log("UdpListenForData");
+            //Debug.Log("UdpListenForData");
             var data = NetworkUtils.uc.ReceiveAsync();
-            Debug.Log("data.Result.Buffer.Length - " + data.Result.Buffer.Length);
+            //Debug.Log("data.Result.Buffer.Length - " + data.Result.Buffer.Length);
 
             ProcessUdpPacket(data.Result.Buffer);
         }
@@ -219,6 +219,7 @@ public class NetworkManager : MonoBehaviour
                     data.x = ((sc_packet_position)packet).x;
                     data.y = ((sc_packet_position)packet).y;
 
+                    Debug.Log("recv position - id: " + data.id + " " + data.x + ", " + data.y);
                     NetworkUtils.StructToBytes(data, ref ev.data);
 
                     scDataQueue.Enqueue(ev);

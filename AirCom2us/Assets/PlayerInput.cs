@@ -18,7 +18,8 @@ public class PlayerInput : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        if (Input.touchCount == 1) {
+        if (Input.touchCount == 1)
+        {
             Touch touch = Input.GetTouch(0);
             switch (touch.phase)
             {
@@ -32,7 +33,7 @@ public class PlayerInput : MonoBehaviour
                         currentPoint = touch.position;
                         //NetworkUtils.SendMovePacket(Camera.main.ScreenToWorldPoint(touch.position));
                         var worldPos = Camera.main.ScreenToWorldPoint(touch.position);
-                        NetworkUtils.UdpSendMovePacket(worldPos, playerId);
+                        //NetworkUtils.UdpSendMovePacket(worldPos, playerId);
                         this.gameObject.transform.position = new Vector3(worldPos.x, worldPos.y, 0);
                         break;
                     }
@@ -48,7 +49,7 @@ public class PlayerInput : MonoBehaviour
                         currentPoint = touch.position;
                         //NetworkUtils.SendMovePacket(Camera.main.ScreenToWorldPoint(touch.position));
                         var worldPos = Camera.main.ScreenToWorldPoint(touch.position);
-                        NetworkUtils.UdpSendMovePacket(worldPos, playerId);
+                        //NetworkUtils.UdpSendMovePacket(worldPos, playerId);
                         this.gameObject.transform.position = new Vector3(worldPos.x, worldPos.y, 0);
                         break;
                     }
@@ -60,6 +61,6 @@ public class PlayerInput : MonoBehaviour
                     //Debug.Log("TouchPhase Canceled!");
                     break;
             }
-            }
         }
+    }
 }

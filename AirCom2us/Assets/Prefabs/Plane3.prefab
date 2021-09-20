@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5282948174981842629}
   - component: {fileID: 1975645523242452670}
-  - component: {fileID: 72075230312652673}
+  - component: {fileID: 318647692204480139}
   m_Layer: 0
   m_Name: Plane3
   m_TagString: Untagged
@@ -83,7 +83,7 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &72075230312652673
+--- !u!114 &318647692204480139
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -92,7 +92,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 2871195211769082057}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 521bec1c36c30b44abb69b9faf79e12b, type: 3}
+  m_Script: {fileID: 11500000, guid: 45ca00a037ed34946949c782cf074402, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   id: 0
+  newPos: {x: 0, y: 0, z: 0}

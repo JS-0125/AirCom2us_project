@@ -73,7 +73,7 @@ public static class NetworkUtils
 
     public static void UdpSendMovePacket(Vector2 touchPos, int id)
     {
-        Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
+        //Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
 
         cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, 0, id);
 
@@ -110,7 +110,7 @@ public static class NetworkUtils
     {
         if (uc == null)
         {
-            Debug.Log("udp is null");
+            //Debug.Log("udp is null");
             return;
         }
         byte[] packet = new byte[1];
