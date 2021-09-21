@@ -1,7 +1,7 @@
 #pragma once
 
 #define SERVER_PORT		49152
-constexpr int MAX_USER = 100000;
+constexpr int MAX_USER = 10000;
 constexpr int MAX_PLAYER_IDX = 10000;
 constexpr int MAX_PLANE1_IDX = 30000;
 constexpr int MAX_PLANE2_IDX = 50000;

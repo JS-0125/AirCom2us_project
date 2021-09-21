@@ -139,11 +139,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="ObjectManager.cpp" />
+    <ClCompile Include="PacketManager.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="ServerManager.cpp" />
     <ClCompile Include="Session.cpp" />
+    <ClCompile Include="SessionManager.cpp" />
+    <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AirCom2us_protocol.h" />
@@ -155,8 +159,13 @@
     <ClInclude Include="luaconf.h" />
     <ClInclude Include="lualib.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="ObjectManager.h" />
+    <ClInclude Include="PacketManager.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="ServerManager.h" />
     <ClInclude Include="Session.h" />
+    <ClInclude Include="SessionManager.h" />
+    <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="session.lua" />
