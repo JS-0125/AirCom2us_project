@@ -7,32 +7,32 @@ HANDLE ServerManager::h_iocp;
 
 	wcout.imbue(locale("korean"));
 	h_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
-	listenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	m_listenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 
-	CreateIoCompletionPort(reinterpret_cast<HANDLE>(listenSocket), h_iocp, SERVER_ID, 0);
+	CreateIoCompletionPort(reinterpret_cast<HANDLE>(m_listenSocket), h_iocp, SERVER_ID, 0);
 
-	memset(&serverAddr, 0, sizeof(SOCKADDR_IN));
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(SERVER_PORT);
-	serverAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
-	::bind(listenSocket, (struct sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
-	listen(listenSocket, SOMAXCONN);
+	memset(&m_serverAddr, 0, sizeof(SOCKADDR_IN));
+	m_serverAddr.sin_family = AF_INET;
+	m_serverAddr.sin_port = htons(SERVER_PORT);
+	m_serverAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+	::bind(m_listenSocket, (struct sockaddr*)&m_serverAddr, sizeof(SOCKADDR_IN));
+	listen(m_listenSocket, SOMAXCONN);
 
-	accept_over.m_op = OP_ACCEPT;
-	memset(&accept_over.m_over, 0, sizeof(accept_over.m_over));
+	m_acceptOver.m_op = OP_ACCEPT;
+	memset(&m_acceptOver.m_over, 0, sizeof(m_acceptOver.m_over));
 	SOCKET c_socket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-	accept_over.m_csocket = c_socket;
-	BOOL ret = AcceptEx(listenSocket, c_socket,
-		accept_over.m_packetbuf, 0, 32, 32, NULL, &accept_over.m_over);
+	m_acceptOver.m_csocket = c_socket;
+	BOOL ret = AcceptEx(m_listenSocket, c_socket,
+		m_acceptOver.m_packetbuf, 0, 32, 32, NULL, &m_acceptOver.m_over);
 	if (FALSE == ret) {
 		int err_num = WSAGetLastError();
 		if (err_num != WSA_IO_PENDING)
-			display_error("AcceptEx Error", err_num);
+			DisplayError("AcceptEx Error", err_num);
 	}
 }
 
  ServerManager::~ServerManager() {
-	closesocket(listenSocket);
+	closesocket(m_listenSocket);
 	WSACleanup();
 }
 
@@ -71,7 +71,7 @@ HANDLE ServerManager::h_iocp;
 	if (0 != ret) {
 		int err_no = WSAGetLastError();
 		if (WSA_IO_PENDING != err_no)
-			display_error("WSARecv : ", WSAGetLastError());
+			DisplayError("WSARecv : ", WSAGetLastError());
 	}
 }
 
@@ -80,10 +80,10 @@ HANDLE ServerManager::h_iocp;
 }
 
  SOCKET ServerManager::GetListenSocket() {
-	return listenSocket;
+	return m_listenSocket;
 }
 
- void ServerManager::display_error(const char* msg, int err_no)
+ void ServerManager::DisplayError(const char* msg, int err_no)
 {
 	WCHAR* lpMsgBuf;
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,

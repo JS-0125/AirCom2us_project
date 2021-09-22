@@ -17,10 +17,10 @@ struct TIMER_EVENT {
 class Timer
 {
 private:
-	static priority_queue <TIMER_EVENT> timer_queue;
-	static mutex timer_l;
+	static priority_queue <TIMER_EVENT> m_timerQueue;
+	static mutex m_timerLock;
 public:
-	static void add_event(int obj, int target_id, OP_TYPE ev_t, int delay_ms);
-	void do_timer();
+	static void AddEvent(int obj, int target_id, OP_TYPE ev_t, int delay_ms);
+	void DoTimer();
 };
 

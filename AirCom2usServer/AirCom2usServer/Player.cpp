@@ -17,7 +17,7 @@
 	CreateIoCompletionPort(reinterpret_cast<HANDLE>(m_socket), h_iocp, c_id, 0);
 }
 
- bool Player::isState(OBJECT_STATE plst) {
+ bool Player::IsState(OBJECT_STATE plst) {
 	if (m_state == plst)
 		return true;
 	return false;

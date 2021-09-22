@@ -19,7 +19,7 @@ private:
 	int m_enemysCnt = 0;
 	Player *m_players;
 	int m_setPlayerCnt = 0;
-	lua_State* L;
+	lua_State* m_luaState;
 	mutex m_sl;
 
 	void GetSessionTable(const char* tableName);
@@ -37,7 +37,7 @@ public:
 	void SetSession();
 	void SetSession(int enemysCnt, vector<SessionData> enemyDatas);
 	bool CheckSession();
-	vector<int> getPlayerId();
+	vector<int> GetPlayerId();
 	vector<Player*>& GetPlayers();
 	void CloseSession();
 };

@@ -8,14 +8,14 @@
 
 class SessionManager
 {
-	array <Session*, MAX_SESSION + 1> sessions;
+	array <Session*, MAX_SESSION + 1> m_sessions;
 public:
 	SessionManager();
 	~SessionManager();
 
 	Session* GetSession(int idx);
 	array <Session*, MAX_SESSION + 1>* GetSessions();
-	int get_session_id(SESSION_STATE sessionState, int sessionType);
-	void checkSession(int sessionId);
+	int GetSessionId(SESSION_STATE sessionState, int sessionType);
+	void CheckSession(int sessionId);
 };
 

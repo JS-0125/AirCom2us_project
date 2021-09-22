@@ -10,7 +10,7 @@ Timer timer;
 SessionManager sessionManager;
 ObjectManager objManager;
 
-void process_packet(int p_id, unsigned char* p_buf)
+void ProcessPacket(int p_id, unsigned char* p_buf)
 {
 	auto obj = objManager.GetObj(p_id);
 	switch (p_buf[1]) {
@@ -20,7 +20,7 @@ void process_packet(int p_id, unsigned char* p_buf)
 		// player 정보
 		// 추후 데이터베이스 생성 후 수정 필요
 		obj->Init(1, 100, 0, 0);
-		PacketManager::send_login_ok_packet(p_id, *(obj->GetSocket()));
+		PacketManager::SendLoginOk(p_id, *(obj->GetSocket()));
 		break;
 	}
 	case CS_MOVE: {
@@ -33,11 +33,11 @@ void process_packet(int p_id, unsigned char* p_buf)
 
 		// open된 session 없음, session 새로 open
 		cout << "session type - " << packet->sessionType << endl;
-		int openSessionId = sessionManager.get_session_id(SESSION_STATE::SESSION_OPEN, packet->sessionType);
+		int openSessionId = sessionManager.GetSessionId(SESSION_STATE::SESSION_OPEN, packet->sessionType);
 		if (openSessionId < 0) {
 			// session open
 			cout << "new session open" << endl;
-			int closeSessionId = sessionManager.get_session_id(SESSION_STATE::SESSION_CLOSE, packet->sessionType);
+			int closeSessionId = sessionManager.GetSessionId(SESSION_STATE::SESSION_CLOSE, packet->sessionType);
 			auto session = sessionManager.GetSession(closeSessionId);
 			session->OpenSession(packet->sessionType);
 			session->SetPlayer(*obj);
@@ -45,7 +45,7 @@ void process_packet(int p_id, unsigned char* p_buf)
 			// session id 플레이어에 할당
 			obj->m_sessionId = closeSessionId;
 
-			sessionManager.checkSession(closeSessionId);
+			sessionManager.CheckSession(closeSessionId);
 		}
 		else {
 			// open된 session에 setPlayer
@@ -57,7 +57,7 @@ void process_packet(int p_id, unsigned char* p_buf)
 			// session id 플레이어에 할당
 			obj->m_sessionId = openSessionId;
 
-			sessionManager.checkSession(openSessionId);
+			sessionManager.CheckSession(openSessionId);
 		}
 
 		break;
@@ -69,7 +69,7 @@ void process_packet(int p_id, unsigned char* p_buf)
 	}
 }
 
-void worker(HANDLE h_iocp, SOCKET l_socket)
+void Worker(HANDLE h_iocp, SOCKET l_socket)
 {
 	while (true) {
 		DWORD num_bytes;
@@ -82,11 +82,11 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 		int key = static_cast<int>(ikey);
 		if (FALSE == ret) {
 			if (SERVER_ID == key) {
-				ServerManager::display_error("GQCS : ", WSAGetLastError());
+				ServerManager::DisplayError("GQCS : ", WSAGetLastError());
 				exit(-1);
 			}
 			else {
-				ServerManager::display_error("GQCS : ", WSAGetLastError());
+				ServerManager::DisplayError("GQCS : ", WSAGetLastError());
 				//disconnect(key);
 			}
 		}
@@ -103,7 +103,7 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 			int num_data = num_bytes + player->GetPrevSize();
 
 			while (num_data >= packet_ptr[0]) {
-				process_packet(key, packet_ptr);
+				ProcessPacket(key, packet_ptr);
 				num_data -= packet_ptr[0];
 				packet_ptr += packet_ptr[0];
 				if (0 >= num_data) break;
@@ -120,7 +120,7 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 			break;
 		case OP_ACCEPT: {
 			cout << "accept" << endl;
-			int c_id = objManager.get_new_player_id(ex_over->m_csocket);
+			int c_id = objManager.GetNewPlayerId(ex_over->m_csocket);
 			Player* player = objManager.GetObj(c_id);
 
 			if (-1 != c_id) {
@@ -154,10 +154,10 @@ void worker(HANDLE h_iocp, SOCKET l_socket)
 
 			auto players = session->GetPlayers();
 			for (int i = 0; i < players.size(); ++i) 
-				PacketManager::send_move_packet(key + ObjectManager::get_enemy_id(enemy->type), x, y, *(players[i]->GetSocket()));
+				PacketManager::SendMove(key + ObjectManager::GetEnemyId(enemy->type), x, y, *(players[i]->GetSocket()));
 
 			if (enemy->x.empty() == false)
-				timer.add_event(key, sessionId, OP_POINT_MOVE, 1000); 
+				timer.AddEvent(key, sessionId, OP_POINT_MOVE, 1000); 
 			break;
 		}
 		}
@@ -168,8 +168,8 @@ int main()
 {
 	vector <thread> worker_threads;
 	for (int i = 0; i < 4; ++i)
-		worker_threads.emplace_back(worker, server.GetIocpHandle(), server.GetListenSocket());
-	thread timer_thread{ std::thread([&]() { timer.do_timer(); }) };
+		worker_threads.emplace_back(Worker, server.GetIocpHandle(), server.GetListenSocket());
+	thread timer_thread{ std::thread([&]() { timer.DoTimer(); }) };
 
 	timer_thread.join();
 	for (auto& th : worker_threads)

@@ -1,6 +1,6 @@
 #include "PacketManager.h"
 
- void PacketManager::send_login_ok_packet(int p_id, SOCKET& socket)
+ void PacketManager::SendLoginOk(int p_id, SOCKET& socket)
 {
 	sc_packet_login_ok p;
 
@@ -17,7 +17,7 @@
 	ServerManager::Send(&p, socket);
 }
 
- void PacketManager::send_set_session_ok(int sessionId, SOCKET& socket)
+ void PacketManager::SendSetSessionOk(int sessionId, SOCKET& socket)
 {
 	sc_packet_set_session_ok p;
 
@@ -28,7 +28,7 @@
 	ServerManager::Send(&p, socket);
 }
 
- void PacketManager::send_move_packet(int move_id, int x, int y, SOCKET& socket)
+ void PacketManager::SendMove(int move_id, int x, int y, SOCKET& socket)
 {
 	sc_packet_position p;
 	p.id = move_id;
@@ -41,7 +41,7 @@
 	ServerManager::Send(&p, socket);
 }
 
- void PacketManager::send_add_obj_packet(int obj_id, SOCKET& socket)
+ void PacketManager::SendAddObj(int obj_id, SOCKET& socket)
 {
 	sc_packet_add_object p;
 

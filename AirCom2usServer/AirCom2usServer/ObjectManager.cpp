@@ -2,36 +2,36 @@
 
  ObjectManager::ObjectManager() {
 	for (int i = 0; i < MAX_USER + 1; ++i) {
-		auto& obj = players[i] = new Player;
+		auto& obj = m_players[i] = new Player;
 		obj->m_id = i;
 	}
 }
 
  ObjectManager::~ObjectManager() {
 	for (int i = 0; i < MAX_USER + 1; ++i)
-		delete players[i];
+		delete m_players[i];
 }
 
  array<Player*, MAX_USER + 1>* ObjectManager::GetPlayers() {
-	return &players;
+	return &m_players;
 }
 
  Player* ObjectManager::GetObj(int idx) {
-	return players[idx];
+	return m_players[idx];
 }
 
- int ObjectManager::get_new_player_id(SOCKET p_socket)
+ int ObjectManager::GetNewPlayerId(SOCKET p_socket)
 {
 	for (int i = SERVER_ID + 1; i < MAX_PLAYER_IDX + 1; ++i) {
-		if (players[i]->isState(OBJST_FREE)) {
-			players[i]->Connected(p_socket);
+		if (m_players[i]->IsState(OBJST_FREE)) {
+			m_players[i]->Connected(p_socket);
 			return i;
 		}
 	}
 	return -1;
 }
 
- int ObjectManager::get_enemy_id(ENEMY_TYPE enemyType) {
+ int ObjectManager::GetEnemyId(ENEMY_TYPE enemyType) {
 	switch (enemyType) {
 	case ENEMY_TYPE::ENEMY_Plane1:
 		return MAX_PLAYER_IDX + 1;

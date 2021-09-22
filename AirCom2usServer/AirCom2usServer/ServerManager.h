@@ -5,9 +5,9 @@
 class ServerManager
 {
 	static HANDLE h_iocp;
-	SOCKADDR_IN serverAddr;
-	EX_OVER accept_over;
-	SOCKET listenSocket;
+	SOCKADDR_IN m_serverAddr;
+	EX_OVER m_acceptOver;
+	SOCKET m_listenSocket;
 public:
 	ServerManager();
 	~ServerManager();
@@ -17,5 +17,5 @@ public:
 	static void Recv(SOCKET& socket, EX_OVER& ex_over, int prev_size);
 	HANDLE GetIocpHandle();
 	SOCKET GetListenSocket();
-	static void display_error(const char* msg, int err_no);
+	static void DisplayError(const char* msg, int err_no);
 };

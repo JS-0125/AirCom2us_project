@@ -1,30 +1,30 @@
 #include "Timer.h"
-mutex Timer::timer_l;
-priority_queue<TIMER_EVENT> Timer::timer_queue;
+mutex Timer::m_timerLock;
+priority_queue<TIMER_EVENT> Timer::m_timerQueue;
 
- void Timer::add_event(int obj, int target_id, OP_TYPE ev_t, int delay_ms)
+ void Timer::AddEvent(int obj, int target_id, OP_TYPE ev_t, int delay_ms)
 {
 	TIMER_EVENT ev;
 	ev.e_type = ev_t;
 	ev.object = obj;
 	ev.start_time = chrono::system_clock::now() + chrono::milliseconds(delay_ms);
 	ev.target_id = target_id;
-	timer_l.lock();
-	timer_queue.push(ev);
-	timer_l.unlock();
+	m_timerLock.lock();
+	m_timerQueue.push(ev);
+	m_timerLock.unlock();
 }
 
- void Timer::do_timer()
+ void Timer::DoTimer()
 {
 	using namespace chrono;
 
 	for (;;) {
-		timer_l.lock();
-		if ((false == timer_queue.empty())
-			&& (timer_queue.top().start_time <= system_clock::now())) {
-			TIMER_EVENT ev = timer_queue.top();
-			timer_queue.pop();
-			timer_l.unlock();
+		m_timerLock.lock();
+		if ((false == m_timerQueue.empty())
+			&& (m_timerQueue.top().start_time <= system_clock::now())) {
+			TIMER_EVENT ev = m_timerQueue.top();
+			m_timerQueue.pop();
+			m_timerLock.unlock();
 
 			if (ev.e_type == OP_POINT_MOVE) {
 				EX_OVER* ex_over = new EX_OVER;
@@ -34,7 +34,7 @@ priority_queue<TIMER_EVENT> Timer::timer_queue;
 			}
 		}
 		else {
-			timer_l.unlock();
+			m_timerLock.unlock();
 			this_thread::sleep_for(10ms);
 		}
 	}

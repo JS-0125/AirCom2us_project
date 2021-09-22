@@ -16,7 +16,7 @@ public:
 
 	void Init(int level, int exp, float x, float y);
 	void PlayerAccept(HANDLE h_iocp, int c_id);
-	bool isState(OBJECT_STATE plst);
+	bool IsState(OBJECT_STATE plst);
 	void Connected(SOCKET p_socket);
 	void CloseSocket();
 	int GetPrevSize();
