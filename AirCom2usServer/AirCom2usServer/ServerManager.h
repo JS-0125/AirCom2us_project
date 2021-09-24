@@ -15,6 +15,8 @@ public:
 	static void PostQueued(int eventType, WSAOVERLAPPED& over);
 	static void Send(void* p, SOCKET& socket);
 	static void Recv(SOCKET& socket, EX_OVER& ex_over, int prev_size);
+	static void Disconnect(SOCKET& socket);
+
 	HANDLE GetIocpHandle();
 	SOCKET GetListenSocket();
 	static void DisplayError(const char* msg, int err_no);

@@ -13,8 +13,13 @@ ObjectManager objManager;
 void ProcessPacket(int p_id, unsigned char* p_buf)
 {
 	auto obj = objManager.GetObj(p_id);
+	if (PacketManager::CheckPakcet(obj->m_state, (CS)p_buf[1]) == false) {
+		ServerManager::Disconnect(*(obj->GetSocket()));
+		cout << "이상 행동으로 disconect 하였습니다" << endl;
+	}
+
 	switch (p_buf[1]) {
-	case CS_LOGIN: {
+	case CS::LOGIN: {
 		cout << "CS Login" << endl;
 		//cs_packet_login* packet = reinterpret_cast<cs_packet_login*>(p_buf);
 		// player 정보
@@ -23,12 +28,12 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 		PacketManager::SendLoginOk(p_id, *(obj->GetSocket()));
 		break;
 	}
-	case CS_MOVE: {
+	case CS::MOVE: {
 		cs_packet_move* packet = reinterpret_cast<cs_packet_move*>(p_buf);
-		obj->m_move_time = packet->move_time;
+		obj->CheckAbnormalAction(packet);
 		break;
 	}
-	case CS_CREATE_SESSION: {
+	case CS::CREATE_SESSION: {
 		cs_packet_create_session* packet = reinterpret_cast<cs_packet_create_session*>(p_buf);
 
 		// open된 session 없음, session 새로 open
@@ -62,6 +67,14 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 
 		break;
 	}
+	case CS::SESSION_END: {
+		// session 정상 종료되는지 확인
+
+		// session 종료
+		sessionManager.EndSession(obj->m_sessionId);
+	}
+		break;
+				
 	default:
 		cout << "Unknown Packet Type from Client[" << p_id;
 		cout << "] Packet Type [" << (int)p_buf[1] << "]";
@@ -87,11 +100,11 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 			}
 			else {
 				ServerManager::DisplayError("GQCS : ", WSAGetLastError());
-				//disconnect(key);
+				ServerManager::Disconnect(*(objManager.GetObj(key)->GetSocket()));
 			}
 		}
 		if ((key != SERVER_ID) && (0 == num_bytes)) {
-			//disconnect(key);
+			ServerManager::Disconnect(*(objManager.GetObj(key)->GetSocket()));
 			continue;
 		}
 		EX_OVER* ex_over = reinterpret_cast<EX_OVER*>(over);

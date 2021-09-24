@@ -17,5 +17,9 @@ public:
 	array <Session*, MAX_SESSION + 1>* GetSessions();
 	int GetSessionId(SESSION_STATE sessionState, int sessionType);
 	void CheckSession(int sessionId);
+	bool IsSessionEnd(int sessionId);
+
+	// 일괄적으로 session 종료
+	void EndSession(int sessionId);
 };
 

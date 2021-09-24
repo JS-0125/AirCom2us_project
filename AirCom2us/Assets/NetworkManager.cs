@@ -25,6 +25,10 @@ public class NetworkManager : MonoBehaviour
         public SC type;
         public byte[] data;
     }
+    private struct data_id
+    {
+        public int id;
+    }
 
     private struct data_position
     {
@@ -32,10 +36,12 @@ public class NetworkManager : MonoBehaviour
         public float x, y;
     }
 
-    private struct data_id
+    private struct data_obj
     {
         public int id;
+        public int hp;
     }
+
 
     private Queue<sc_data_event> scDataQueue = new Queue<sc_data_event>();
 
@@ -71,10 +77,12 @@ public class NetworkManager : MonoBehaviour
                 case SC.LOGIN_OK:
                     {
                         Debug.Log("SC.LOGIN_OK");
-                        object objId = new data_id() as object;
-                        NetworkUtils.BytesToStructure(data.data, ref objId, typeof(data_id));
-                        playerId = ((data_id)objId).id;
-                        objectManager.AddObject(playerId);
+                        object obj = new data_obj() as object;
+                        NetworkUtils.BytesToStructure(data.data, ref obj, typeof(data_obj));
+                        
+                        var playerData = (data_obj)obj;
+                        playerId = playerData.id;
+                        objectManager.AddObject(playerId, playerData.hp);
 
                         //player.SetActive(true);
                         //player.transform.position = new Vector3(data.x, data.y, 0);
@@ -102,9 +110,14 @@ public class NetworkManager : MonoBehaviour
                     break;
                 case SC.ADD_OBJECT:
                     {
-                        object objId = new data_id() as object;
-                        NetworkUtils.BytesToStructure(data.data, ref objId, typeof(data_id));
-                        objectManager.AddObject(((data_id)objId).id);
+                        object objId = new data_obj() as object;
+                        NetworkUtils.BytesToStructure(data.data, ref objId, typeof(data_obj));
+                        objectManager.AddObject(((data_obj)objId).id, ((data_obj)objId).hp);
+                        break;
+                    }
+                case SC.END_SESSION:
+                    { 
+                        objectManager.EndSession();
                         break;
                     }
             }
@@ -195,8 +208,12 @@ public class NetworkManager : MonoBehaviour
                     ev.type = SC.LOGIN_OK;
                     ev.data = new byte[1];
 
-                    data_id data = new data_id();
+                    data_obj data = new data_obj();
                     data.id = ((sc_packet_login_ok)packet).id;
+
+                    // юсюг hp
+                    data.hp = 100;
+
                     NetworkUtils.StructToBytes(data, ref ev.data);
 
                     scDataQueue.Enqueue(ev);
@@ -252,9 +269,24 @@ public class NetworkManager : MonoBehaviour
                     ev.type = SC.ADD_OBJECT;
                     ev.data = new byte[1];
 
-                    data_id data = new data_id();
+                    data_obj data = new data_obj();
                     data.id = ((sc_packet_add_object)packet).id;
+                    data.hp = ((sc_packet_add_object)packet).hp;
                     NetworkUtils.StructToBytes(data, ref ev.data);
+
+                    scDataQueue.Enqueue(ev);
+                }
+                break;
+            case SC.END_SESSION:
+                {
+                    Debug.Log("SC.END_SESSION");
+                    object packet = new sc_packet_end_session() as object;
+                    NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
+
+                    // Enqueue
+                    sc_data_event ev;
+                    ev.type = SC.END_SESSION;
+                    ev.data = new byte[1];
 
                     scDataQueue.Enqueue(ev);
                 }

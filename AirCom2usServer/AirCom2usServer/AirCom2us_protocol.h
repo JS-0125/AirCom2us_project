@@ -11,18 +11,22 @@ constexpr int MAX_BOSS2_IDX = 100000;
 
 constexpr int MAX_SESSION = 10000;
 
-#define CS_LOGIN		0		// 클라이언트가 서버에 접속 요청
-#define CS_MOVE		1		// 클라이언트가 아바타기 이동을 서버에 요청
-#define CS_LOGOUT	2		// 클라이언트 종료
-#define CS_CREATE_SESSION	3		
+enum CS {
+	LOGIN,
+	MOVE,
+	LOGOUT,
+	CREATE_SESSION,
+	SESSION_END,
+};
 
-#define SC_LOGIN_OK		0	// CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 수락
-#define SC_LOGIN_FAIL		1	// CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 거절
-#define SC_POSITION		2	// OBJECT의 위치 변경을 클라이언트에 통보
-#define SC_SET_SESSION_OK	3		
-#define SC_ADD_OBJECT	4		
-
-
+enum SC {
+	LOGIN_OK,
+	LOGIN_FAIL,
+	POSITION,
+	SET_SESSION_OK,
+	ADD_OBJECT,
+	END_SESSION,
+};
 #pragma pack(push ,1)
 
 struct sc_packet_login_ok {
@@ -57,6 +61,12 @@ struct sc_packet_add_object {
 	unsigned char size;
 	unsigned char type;
 	int id;
+	int hp;
+};
+
+struct sc_packe_end_session {
+	unsigned char size;
+	unsigned char type;
 };
 
 struct cs_packet_login {
@@ -68,7 +78,8 @@ struct cs_packet_move {
 	unsigned char	size;
 	unsigned char	type;
 	float	x, y;
-	int move_time;
+	float move_time;
+	int id;
 };
 
 struct cs_packet_logout {
@@ -81,6 +92,11 @@ struct cs_packet_create_session {
 	unsigned char	type;
 	int sessionType;
 	// 어떤 스테이지인지 확인할 수 있는 변수 추가 가능
+};
+
+struct cs_packet_cs_packet_session_endcreate_session {
+	unsigned char	size;
+	unsigned char	type;
 };
 
 #pragma pack (pop)

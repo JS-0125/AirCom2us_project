@@ -32,6 +32,11 @@
 	closesocket(m_socket);
 }
 
+ void Player::CloseSocket(string msg) {
+	 closesocket(m_socket);
+	 cout << msg << endl;
+ }
+
  int Player::GetPrevSize() {
 	return m_prev_size;
 }
@@ -47,3 +52,17 @@
  SOCKET* Player::GetSocket() {
 	return &m_socket;
 }
+
+ void Player::CheckAbnormalAction(cs_packet_move* packet) {
+	 // move time check
+	 cout << m_id<<": CheckAbnormalAction packet - " <<packet->move_time << endl;
+	 if (m_move_time == 0) {
+		 m_move_time = packet->move_time;
+		 return;
+	 }
+	 if (packet->move_time - m_move_time > 1.5f) {
+		 cout << packet->move_time - m_move_time << " - ";
+		 CloseSocket("move time is abnormal" );
+	 }
+	 m_move_time = packet->move_time;
+ }

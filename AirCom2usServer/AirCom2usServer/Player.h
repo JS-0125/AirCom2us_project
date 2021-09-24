@@ -1,5 +1,6 @@
 #pragma once
 #include"Object.h"
+#include"AirCom2us_protocol.h"
 
 class Player: public Object
 {
@@ -19,10 +20,12 @@ public:
 	bool IsState(OBJECT_STATE plst);
 	void Connected(SOCKET p_socket);
 	void CloseSocket();
+	void CloseSocket(string msg);
 	int GetPrevSize();
 	void SetPrevSize(int prevSize);
 	EX_OVER* GetOverlapped();
 	SOCKET* GetSocket();
+	void CheckAbnormalAction(cs_packet_move* packet);
 
 	void operator=(const Player& rhs) {
 		m_state.store(rhs.m_state);

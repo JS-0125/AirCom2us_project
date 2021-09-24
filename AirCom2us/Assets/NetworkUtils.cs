@@ -58,24 +58,20 @@ public static class NetworkUtils
         tc.Close();
     }
 
-    public static void SendMovePacket(Vector2 touchPos)
+    public static void SendMovePacketTcp(Vector2 touchPos, int id, float time)
     {
-        //Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
+        Debug.Log("SendMovePacketTcp - " + time);
 
-        //cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE),touchPos.x,touchPos.y, 0);
+        cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, time, id);
 
-        //SendPacket(ref movePacket);
-        //byte[] packet = new byte[1];
-        //StructToBytes(movePacket, ref packet);
-
-        //tc.Client.Send(packet);
+        SendPacket(ref movePacket);
     }
 
     public static void UdpSendMovePacket(Vector2 touchPos, int id)
     {
         //Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
 
-        cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, 0, id);
+        cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, Time.time, id);
 
         UdpSendPacket(ref movePacket);
     }
@@ -96,6 +92,14 @@ public static class NetworkUtils
         cs_packet_create_session createSessionPacket = new cs_packet_create_session((byte)Marshal.SizeOf(typeof(cs_packet_create_session)), Convert.ToByte(CS.CREATE_SESSION), sessionType);
 
         SendPacket(ref createSessionPacket);
+    }
+
+    public static void SendSessionEnd() {
+        Debug.Log("SendSessionEnd");
+
+        cs_packet_session_end sessionEndPacket = new cs_packet_session_end((byte)Marshal.SizeOf(typeof(cs_packet_session_end)), Convert.ToByte(CS.SESSION_END));
+
+        SendPacket(ref sessionEndPacket);
     }
 
     private static void SendPacket<T>(ref T data)

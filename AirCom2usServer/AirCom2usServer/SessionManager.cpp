@@ -1,26 +1,26 @@
 #include "SessionManager.h"
 
- SessionManager::SessionManager() {
+SessionManager::SessionManager() {
 	for (int i = 0; i < MAX_SESSION + 1; ++i) {
 		auto& session = m_sessions[i] = new Session;
 		session->CreateSession(i);
 	}
 }
 
- SessionManager::~SessionManager() {
+SessionManager::~SessionManager() {
 	for (int i = 0; i < MAX_SESSION + 1; ++i)
 		delete m_sessions[i];
 }
 
- Session* SessionManager::GetSession(int idx) {
+Session* SessionManager::GetSession(int idx) {
 	return m_sessions[idx];
 }
 
- array<Session*, MAX_SESSION + 1>* SessionManager::GetSessions() {
+array<Session*, MAX_SESSION + 1>* SessionManager::GetSessions() {
 	return &m_sessions;
 }
 
- int SessionManager::GetSessionId(SESSION_STATE sessionState, int sessionType)
+int SessionManager::GetSessionId(SESSION_STATE sessionState, int sessionType)
 {
 	switch (sessionState)
 	{
@@ -52,7 +52,7 @@
 	return -1;
 }
 
- void SessionManager::CheckSession(int sessionId) {
+void SessionManager::CheckSession(int sessionId) {
 	if (!m_sessions[sessionId]->CheckSession())
 		return;
 	auto sessionPlayers = m_sessions[sessionId]->GetPlayers();
@@ -63,10 +63,11 @@
 		int typeId = ObjectManager::GetEnemyId(enemyData.type);
 		int objId = typeId + i;
 
+		// enemy 정보 전송
 		for (int i = 0; i < sessionPlayers.size(); ++i)
-			PacketManager::SendAddObj(objId, *(sessionPlayers[i]->GetSocket())); //send_add_obj_packet(sessionPlayers[i], objId);
+			PacketManager::SendAddObj(objId, 2 ,*(sessionPlayers[i]->GetSocket())); //send_add_obj_packet(sessionPlayers[i], objId);
 
-																						  // 등장 시간
+		// 등장 시간
 		Timer::AddEvent(objId - typeId, sessionId, OP_POINT_MOVE, enemyData.time);
 	}
 
@@ -74,11 +75,27 @@
 	for (int i = 0; i < sessionPlayers.size(); ++i) {
 		for (int j = 0; j < sessionPlayers.size(); ++j)
 			if (sessionPlayers[i] != sessionPlayers[j])
-				PacketManager::SendAddObj(sessionPlayers[j]->m_id, *(sessionPlayers[i]->GetSocket()));
+				PacketManager::SendAddObj(sessionPlayers[j]->m_id, 10, *(sessionPlayers[i]->GetSocket()));
 		//send_add_obj_packet(sessionPlayers[i], sessionPlayers[j]);
 	}
 
 	// 세션 세팅 ok
-	for (int i = 0; i < sessionPlayers.size(); ++i)
+	for (int i = 0; i < sessionPlayers.size(); ++i) {
 		PacketManager::SendSetSessionOk(sessionId, *(sessionPlayers[i]->GetSocket()));
+		sessionPlayers[i]->m_state = OBJECT_STATE::OBJST_INGAME;
+	}
+}
+
+bool SessionManager::IsSessionEnd(int sessionId) {
+	if (m_sessions[sessionId]->IsSessionEnd())
+		return true;
+	return false;
+}
+
+// 일괄적으로 session 종료
+void SessionManager::EndSession(int sessionId) {
+	auto players = m_sessions[sessionId]->GetPlayers();
+	for (const auto& player : players)
+		PacketManager::SendEndSession(player->m_id, *(player->GetSocket()));
+	m_sessions[sessionId]->CloseSession();
 }

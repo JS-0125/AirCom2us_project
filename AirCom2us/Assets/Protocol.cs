@@ -15,9 +15,10 @@ public enum OBJECT_ID_IDX
 public enum CS
 {
     LOGIN,  // 클라이언트가 서버에 접속 요청
-    MOVE,   // 클라이언트가 아바타기 이동을 서버에 요청
+    MOVE,   // 이동 확인
     LOGOUT,     // 클라이언트 종료
 	CREATE_SESSION,
+	SESSION_END,
 }
 
 public enum SC
@@ -27,6 +28,7 @@ public enum SC
     POSITION,   // OBJECT의 위치 변경을 클라이언트에 통보
 	SET_SESSION_OK,
 	ADD_OBJECT,
+	END_SESSION,
 }
 
 
@@ -54,8 +56,8 @@ public class sc_packet_login_ok
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class sc_packet_login_fail
 {
-	byte size;
-	char type;
+	public byte size;
+	public char type;
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -84,6 +86,15 @@ public class sc_packet_add_object
 	public byte size;
 	public byte type;
 	public int id;
+	public int hp;
+};
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+
+public class sc_packet_end_session
+{
+	public byte size;
+	public byte type;
 };
 
 
@@ -105,10 +116,10 @@ public class cs_packet_move
 	public byte size;
 	public byte type;
 	public float x, y;
-	public int move_time;
+	public float move_time;
 	public int m_id;
 	public cs_packet_move(){}
-	public cs_packet_move (byte packet_size, byte packet_type, float posX, float posY, int current_time, int id)
+	public cs_packet_move (byte packet_size, byte packet_type, float posX, float posY, float current_time, int id)
     {
 		size = packet_size;
 		type = packet_type;
@@ -140,5 +151,18 @@ public class cs_packet_create_session
 		size = packet_size;
 		type = packet_type;
 		sessionType = packet_sessionType;
+	}
+};
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class cs_packet_session_end
+{
+	byte size;
+	byte type;
+
+	public cs_packet_session_end(byte packet_size, byte packet_type)
+	{
+		size = packet_size;
+		type = packet_type;
 	}
 };

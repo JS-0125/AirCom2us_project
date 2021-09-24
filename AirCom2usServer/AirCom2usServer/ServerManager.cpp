@@ -75,6 +75,11 @@ HANDLE ServerManager::h_iocp;
 	}
 }
 
+ void ServerManager::Disconnect(SOCKET& socket)
+ {
+	 closesocket(socket);
+ }
+
  HANDLE ServerManager::GetIocpHandle() {
 	return h_iocp;
 }

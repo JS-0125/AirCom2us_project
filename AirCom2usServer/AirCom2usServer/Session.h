@@ -40,5 +40,6 @@ public:
 	vector<int> GetPlayerId();
 	vector<Player*>& GetPlayers();
 	void CloseSession();
+	bool IsSessionEnd();
 };
 

@@ -147,6 +147,7 @@
  void Session::SetSession(int enemysCnt, vector<SessionData> enemyDatas) {
 	m_enemysCnt = enemysCnt;
 	m_enemyDatas = enemyDatas;
+	sessionState = SESSION_STATE::SESSION_INGAME;
 }
 
  bool Session::CheckSession() {
@@ -174,7 +175,20 @@
  void Session::CloseSession() {
 	sessionState = SESSION_STATE::SESSION_CLOSE;
 	m_sessionID = -1;
+	for (int i = 0; i < m_playersCnt; ++i) {
+		m_players[i].m_move_time = 0;
+		m_players[i].m_sessionId = 0;
+		m_players[i].m_state = OBJECT_STATE::OBJST_CONNECTED;
+	}
 	m_playersCnt = 0;
 	m_enemysCnt = 0;
+
 	this->~Session();
 }
+
+ bool Session::IsSessionEnd() {
+	 for (int i = 0; i < m_playersCnt; ++i)
+		 if (m_players[i].hp > 0)
+			 return false;
+	 return true;
+ }
