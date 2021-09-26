@@ -1,4 +1,4 @@
-myid = -1;
+myid = "";
 local ENEMY_TYPE = {ENEMY_Plane1=0, ENEMY_Plane2=1, ENEMY_Plane3=2, ENEMY_Boss1=3, ENEMY_Boss2=4 };
 
 enemys0 = {

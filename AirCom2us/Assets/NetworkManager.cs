@@ -19,7 +19,7 @@ public class NetworkManager : MonoBehaviour
 
     [SerializeField] private GameObject player;
     [SerializeField] private ObjectManager objectManager;
-    [SerializeField] private int sessionId;
+    [SerializeField] private string sessionIp;
     private struct sc_data_event
     {
         public SC type;
@@ -28,6 +28,11 @@ public class NetworkManager : MonoBehaviour
     private struct data_id
     {
         public int id;
+    }
+
+    private struct data_string
+    {
+        public string str;
     }
 
     private struct data_position
@@ -42,29 +47,12 @@ public class NetworkManager : MonoBehaviour
         public int hp;
     }
 
-
     private Queue<sc_data_event> scDataQueue = new Queue<sc_data_event>();
 
-    public void StartNetworking(string ip)
+    private void Start()
     {
-        NetworkUtils.Connect(ip);
-
-        Debug.Log(" tc - " + NetworkUtils.tc.Client.ToString());
-        NetworkUtils.SendLoginPacket();
-
-        thrdClientReceive = new Thread(new ThreadStart(ListenForData));
-        thrdClientReceive.IsBackground = true;
-        thrdClientReceive.Start();
-    }
-
-    public void StartUdpNetworking()
-    {
-        NetworkUtils.UdpJoinMulticast();
-        Debug.Log(" uc - " + NetworkUtils.uc.Client.ToString());
-
         thrdUdpClientReceive = new Thread(new ThreadStart(UdpListenForData));
         thrdUdpClientReceive.IsBackground = true;
-        thrdUdpClientReceive.Start();
     }
 
     private void Update()
@@ -100,11 +88,12 @@ public class NetworkManager : MonoBehaviour
                     break;
                 case SC.SET_SESSION_OK:
                     {
-                        //player.SetActive(true);
-                        //player.transform.position = new Vector3(0, 0, 0);
-                        object objId = new data_id() as object;
-                        NetworkUtils.BytesToStructure(data.data, ref objId, typeof(data_id));
-                        sessionId = ((data_id)objId).id;
+                        object str = new data_string() as object;
+
+                        NetworkUtils.BytesToStructure(data.data, ref str, typeof(data_string));
+                        sessionIp = ((data_string)str).str;
+                        Debug.Log("sessionIp - " + sessionIp);
+                        StartUdpNetworking();
                         objectManager.SetSessionOk();
                     }
                     break;
@@ -125,6 +114,7 @@ public class NetworkManager : MonoBehaviour
                 case SC.END_SESSION:
                     { 
                         objectManager.EndSession();
+                        EndUdpNetworking();
                         break;
                     }
             }
@@ -134,6 +124,31 @@ public class NetworkManager : MonoBehaviour
     private void OnDisable()
     {
         NetworkUtils.Disconnect();
+    }
+
+    public void StartNetworking(string ip)
+    {
+        NetworkUtils.Connect(ip);
+
+        Debug.Log(" tc - " + NetworkUtils.tc.Client.ToString());
+        NetworkUtils.SendLoginPacket();
+
+        thrdClientReceive = new Thread(new ThreadStart(ListenForData));
+        thrdClientReceive.IsBackground = true;
+        thrdClientReceive.Start();
+    }
+
+    public void StartUdpNetworking()
+    {
+        NetworkUtils.UdpJoinMulticast(sessionIp);
+        Debug.Log(" uc - " + NetworkUtils.uc.Client.ToString());
+
+        thrdUdpClientReceive.Start();
+    }
+
+    private void EndUdpNetworking()
+    {
+        thrdUdpClientReceive.Abort();
     }
 
     public void OnApplicationPause(bool paused)
@@ -272,15 +287,14 @@ public class NetworkManager : MonoBehaviour
                     object packet = new sc_packet_set_session_ok() as object;
                     NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
 
-                    // Enqueue
                     sc_data_event ev;
                     ev.type = SC.SET_SESSION_OK;
                     ev.data = new byte[1];
 
-                    data_id data = new data_id();
-                    data.id = ((sc_packet_set_session_ok)packet).sessionId;
+                    data_string data = new data_string();
+                    data.str = new string(((sc_packet_set_session_ok)packet).ip);
+                    Debug.Log(data.str.ToString());
                     NetworkUtils.StructToBytes(data, ref ev.data);
-
                     scDataQueue.Enqueue(ev);
                 }
                 break;

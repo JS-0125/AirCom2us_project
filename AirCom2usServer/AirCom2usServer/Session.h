@@ -14,7 +14,6 @@ struct SessionData {
 class Session
 {
 private:
-	int m_sessionID = -1; // 필요 없을 수도? 밖에서 배열로 관리하고 있기 때문에
 	int m_playersCnt = 0;
 	int m_enemysCnt = 0;
 	vector<Player*> m_players;
@@ -24,10 +23,11 @@ private:
 	void GetSessionTable(const char* tableName);
 	void GetSessionDatas(int session);
 public:
+	string m_sessionIP = ""; // udp ip
 	vector<SessionData> m_enemyDatas;
 	SESSION_STATE sessionState = SESSION_STATE::SESSION_CLOSE;
 	int m_sessionType = -1;
-	void CreateSession(int id);
+	void CreateSession(string ip);
 	void OpenSession(int playersCnt);
 	void SetPlayer(Player* player);
 	void SetSession();

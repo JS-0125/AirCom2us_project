@@ -97,8 +97,8 @@
 }
 
 
- void Session::CreateSession(int id) {
-	m_sessionID = id;
+ void Session::CreateSession(string ip) {
+	m_sessionIP = ip;
 	// 가상머신 자료구조
 	m_luaState = luaL_newstate();
 
@@ -113,7 +113,7 @@
 		cout << "error" << endl;
 	}
 	lua_getglobal(m_luaState, "set_uid");
-	lua_pushnumber(m_luaState, m_sessionID);
+	lua_pushstring(m_luaState, m_sessionIP.c_str());
 	lua_pcall(m_luaState, 1, 1, 0);
 	lua_pop(m_luaState, 1);// eliminate set_uid from stack after call
 }

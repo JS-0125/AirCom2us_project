@@ -27,6 +27,6 @@ public class UI : MonoBehaviour
 
     public void RoomJoin()
     {
-        FindObjectOfType<NetworkManager>().StartUdpNetworking();
+        //FindObjectOfType<NetworkManager>().StartUdpNetworking();
     }
 }

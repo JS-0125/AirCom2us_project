@@ -77,7 +77,7 @@ public class sc_packet_set_session_ok
 {
 	public byte size;
 	public byte type;
-	public int sessionId;
+	[MarshalAs(UnmanagedType.ByValArray, SizeConst = 30)] public char[] ip;
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]

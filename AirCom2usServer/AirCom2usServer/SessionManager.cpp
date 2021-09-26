@@ -1,9 +1,15 @@
 #include "SessionManager.h"
 
 SessionManager::SessionManager() {
+	int j = 0;
 	for (int i = 0; i < MAX_SESSION + 1; ++i) {
 		auto& session = m_sessions[i] = new Session;
-		session->CreateSession(i);
+		if (i % 1000 == 0) {
+			++j;
+		}
+		string ip = "229.1." + to_string(j) + '.' + to_string(i%1000);
+		//cout << ip << "\t";
+		session->CreateSession(ip);
 	}
 }
 
@@ -88,7 +94,7 @@ void SessionManager::CheckSession(int sessionId) {
 
 	// 세션 세팅 ok
 	for (int i = 0; i < sessionPlayers.size(); ++i) {
-		PacketManager::SendSetSessionOk(sessionId, *(sessionPlayers[i]->GetSocket()));
+		PacketManager::SendSetSessionOk(m_sessions[sessionId]->m_sessionIP, *(sessionPlayers[i]->GetSocket()));
 		sessionPlayers[i]->m_state = OBJECT_STATE::OBJST_INGAME;
 	}
 }

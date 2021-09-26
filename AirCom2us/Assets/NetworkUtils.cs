@@ -37,7 +37,7 @@ public static class NetworkUtils
         // 나중에 멀티캐스트나 브로드캐스트 하기
     }
 
-    public static void UdpJoinMulticast()
+    public static void UdpJoinMulticast(string ip)
     {
         // (1) UdpClient 객체 성성
         uc = new UdpClient(udpPort);
@@ -48,7 +48,7 @@ public static class NetworkUtils
         //uc.Client.Bind(localEP);
 
         // (3) Multicast 그룹에 Join
-        multicastIP = IPAddress.Parse("229.1.1.229");
+        multicastIP = IPAddress.Parse(ip);
         uc.JoinMulticastGroup(multicastIP);
 
         remoteEP = new IPEndPoint(multicastIP, udpPort);

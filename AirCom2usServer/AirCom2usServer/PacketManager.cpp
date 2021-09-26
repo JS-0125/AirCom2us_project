@@ -17,12 +17,13 @@
 	ServerManager::Send(&p, socket);
 }
 
- void PacketManager::SendSetSessionOk(int sessionId, SOCKET& socket)
+ void PacketManager::SendSetSessionOk(string ip, SOCKET& socket)
 {
 	sc_packet_set_session_ok p;
 
 	p.type = SC::SET_SESSION_OK;
-	p.sessionId = sessionId;
+	strcpy_s(p.ip, ip.c_str());
+
 	p.size = sizeof(p);
 
 	ServerManager::Send(&p, socket);
