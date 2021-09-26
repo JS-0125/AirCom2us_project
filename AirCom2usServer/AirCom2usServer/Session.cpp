@@ -96,10 +96,6 @@
 	}
 }
 
- Session::~Session() {
-	if (m_players != nullptr)
-		delete[] m_players;
-}
 
  void Session::CreateSession(int id) {
 	m_sessionID = id;
@@ -126,15 +122,15 @@
 	sessionState = SESSION_STATE::SESSION_OPEN;
 
 	m_playersCnt = playersCnt;
-	m_players = new Player[m_playersCnt];
+	//m_players = new Player[m_playersCnt];
 	m_sessionType = playersCnt;
 
 	cout << "m_playersCnt - " << m_playersCnt << endl;
 }
 
- void Session::SetPlayer(Player& player) {
-	m_players[m_setPlayerCnt++] = player;
-	if (m_setPlayerCnt == m_playersCnt)
+ void Session::SetPlayer(Player* player) {
+	m_players.emplace_back(player);
+	if (m_players.size() == m_playersCnt)
 		SetSession();
 }
 
@@ -151,7 +147,7 @@
 }
 
  bool Session::CheckSession() {
-	if (m_setPlayerCnt == m_playersCnt)
+	if (m_players.size() == m_playersCnt)
 		return true;
 	return false;
 }
@@ -159,36 +155,31 @@
  vector<int> Session::GetPlayerId() {
 	vector<int> tmp;
 	for (int i = 0; i < m_playersCnt; ++i)
-		tmp.push_back(m_players[i].m_id);
+		tmp.push_back(m_players[i]->m_id);
 
 	return tmp;
 }
 
  vector<Player*>& Session::GetPlayers() {
-	vector<Player*> tmp;
-	for (int i = 0; i < m_playersCnt; ++i)
-		tmp.emplace_back(&m_players[i]);
-
-	return tmp;
+	return m_players;
 }
 
  void Session::CloseSession() {
-	sessionState = SESSION_STATE::SESSION_CLOSE;
-	m_sessionID = -1;
 	for (int i = 0; i < m_playersCnt; ++i) {
-		m_players[i].m_move_time = 0;
-		m_players[i].m_sessionId = 0;
-		m_players[i].m_state = OBJECT_STATE::OBJST_CONNECTED;
+		m_players[i]->m_move_time = 0;
+		m_players[i]->m_sessionId = 0;
+		m_players[i]->m_state = OBJECT_STATE::OBJST_CONNECTED;
 	}
+	m_players.clear();
 	m_playersCnt = 0;
 	m_enemysCnt = 0;
-
-	this->~Session();
+	m_enemyDatas.clear();
+	sessionState = SESSION_STATE::SESSION_CLOSE;
 }
 
  bool Session::IsSessionEnd() {
 	 for (int i = 0; i < m_playersCnt; ++i)
-		 if (m_players[i].hp > 0)
+		 if (m_players[i]->hp > 0)
 			 return false;
 	 return true;
  }

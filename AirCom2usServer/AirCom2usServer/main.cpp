@@ -30,7 +30,21 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 	}
 	case CS::MOVE: {
 		cs_packet_move* packet = reinterpret_cast<cs_packet_move*>(p_buf);
-		obj->CheckAbnormalAction(packet);
+		// 이상행동 체크
+		if (obj->CheckAbnormalAction(packet)) {
+			// session 종료
+			PacketManager::SendEndSession(obj->m_id, *(obj->GetSocket()));
+			sessionManager.RemovePlayer(obj->m_sessionId, obj->m_id);
+
+			// 남은 플레이어들에게 해당 플레이어 제거
+			auto players = sessionManager.GetSession(obj->m_sessionId)->GetPlayers();
+			for (int i = 0; i < players.size(); ++i)
+				PacketManager::SendRemoveObj(players[i]->m_id, obj->m_id, *(players[i]->GetSocket()));
+
+			// 플레이어 게임정보 리셋
+			obj->ResetInGameData();
+			obj->m_state = OBJECT_STATE::OBJST_CONNECTED;
+		}
 		break;
 	}
 	case CS::CREATE_SESSION: {
@@ -43,25 +57,17 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 			// session open
 			cout << "new session open" << endl;
 			int closeSessionId = sessionManager.GetSessionId(SESSION_STATE::SESSION_CLOSE, packet->sessionType);
-			auto session = sessionManager.GetSession(closeSessionId);
-			session->OpenSession(packet->sessionType);
-			session->SetPlayer(*obj);
-
+			sessionManager.OpenSession(packet->sessionType, closeSessionId, obj);
 			// session id 플레이어에 할당
 			obj->m_sessionId = closeSessionId;
-
 			sessionManager.CheckSession(closeSessionId);
 		}
 		else {
 			// open된 session에 setPlayer
 			cout << "join session" << endl;
-			auto session = sessionManager.GetSession(openSessionId);
-
-			session->SetPlayer(*obj);
-
+			sessionManager.JoinSession(openSessionId, obj);
 			// session id 플레이어에 할당
 			obj->m_sessionId = openSessionId;
-
 			sessionManager.CheckSession(openSessionId);
 		}
 

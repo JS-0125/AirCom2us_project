@@ -26,6 +26,7 @@ enum SC {
 	SET_SESSION_OK,
 	ADD_OBJECT,
 	END_SESSION,
+	REMOVE_OBJECT,
 };
 #pragma pack(push ,1)
 
@@ -67,6 +68,12 @@ struct sc_packet_add_object {
 struct sc_packe_end_session {
 	unsigned char size;
 	unsigned char type;
+};
+
+struct sc_packet_remove_object {
+	unsigned char size;
+	unsigned char type;
+	int id;
 };
 
 struct cs_packet_login {

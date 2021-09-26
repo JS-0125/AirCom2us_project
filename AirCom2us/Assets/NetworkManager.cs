@@ -115,6 +115,13 @@ public class NetworkManager : MonoBehaviour
                         objectManager.AddObject(((data_obj)objId).id, ((data_obj)objId).hp);
                         break;
                     }
+                case SC.REMOVE_OBJECT:
+                    {
+                        object objId = new data_obj() as object;
+                        NetworkUtils.BytesToStructure(data.data, ref objId, typeof(data_obj));
+                        objectManager.RemoveObject(((data_obj)objId).id);
+                        break;
+                    }
                 case SC.END_SESSION:
                     { 
                         objectManager.EndSession();
@@ -129,15 +136,28 @@ public class NetworkManager : MonoBehaviour
         NetworkUtils.Disconnect();
     }
 
-    private void ListenForData()
+    public void OnApplicationPause(bool paused)
+    {
+        if (paused)
+        {
+            //Game is paused, start service to get notifications
+        }
+        else
+        {
+            //Game is unpaused, stop service notifications.
+            // 장시간 puase되었다가 resume될 경우 연결이 끊어질 수 있으므로 상태를 체크한다.
+        }
+    }
+
+        private void ListenForData()
     {
         try
         {
-            Byte[] buffer = new Byte[1024];
             while (true)
             {
                 using (NetworkStream stream = NetworkUtils.tc.GetStream())
                 {
+                    Byte[] buffer = new Byte[512];
                     int length;
                     while ((length = stream.Read(buffer, 0, buffer.Length)) != 0)
                     {
@@ -173,7 +193,8 @@ public class NetworkManager : MonoBehaviour
         int in_packet_size = 0;
         while (0 != io_byte)
         {
-            if (0 == in_packet_size) in_packet_size = ptr[0];
+            Debug.Log("io_byte - " + io_byte);
+            if (0 == in_packet_size) in_packet_size = ptr[ptr_idx];
             if (io_byte + saved_packet_size >= in_packet_size)
             {
                 Array.Copy(ptr, ptr_idx, packet_buffer, saved_packet_size, in_packet_size - saved_packet_size);
@@ -223,6 +244,8 @@ public class NetworkManager : MonoBehaviour
                 break;
             case SC.POSITION:
                 {
+                    Debug.Log("SC.POSITION");
+
                     object packet = new sc_packet_position() as object;
                     NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
 
@@ -235,7 +258,7 @@ public class NetworkManager : MonoBehaviour
                     data.id = ((sc_packet_position)packet).id;
                     data.x = ((sc_packet_position)packet).x;
                     data.y = ((sc_packet_position)packet).y;
-
+                    
                     Debug.Log("recv position - id: " + data.id + " " + data.x + ", " + data.y);
                     NetworkUtils.StructToBytes(data, ref ev.data);
 
@@ -244,6 +267,8 @@ public class NetworkManager : MonoBehaviour
                 break;
             case SC.SET_SESSION_OK:
                 {
+                    Debug.Log("SC.SET_SESSION_OK");
+
                     object packet = new sc_packet_set_session_ok() as object;
                     NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
 
@@ -261,6 +286,8 @@ public class NetworkManager : MonoBehaviour
                 break;
             case SC.ADD_OBJECT:
                 {
+                    Debug.Log("SC.ADD_OBJECT");
+
                     object packet = new sc_packet_add_object() as object;
                     NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
 
@@ -272,6 +299,25 @@ public class NetworkManager : MonoBehaviour
                     data_obj data = new data_obj();
                     data.id = ((sc_packet_add_object)packet).id;
                     data.hp = ((sc_packet_add_object)packet).hp;
+                    NetworkUtils.StructToBytes(data, ref ev.data);
+
+                    scDataQueue.Enqueue(ev);
+                }
+                break;
+            case SC.REMOVE_OBJECT:
+                {
+                    Debug.Log("SC.REMOVE_OBJECT");
+
+                    object packet = new sc_packet_remove_object() as object;
+                    NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
+
+                    // Enqueue
+                    sc_data_event ev;
+                    ev.type = SC.REMOVE_OBJECT;
+                    ev.data = new byte[1];
+
+                    data_id data = new data_id();
+                    data.id = ((sc_packet_remove_object)packet).id;
                     NetworkUtils.StructToBytes(data, ref ev.data);
 
                     scDataQueue.Enqueue(ev);
@@ -292,7 +338,7 @@ public class NetworkManager : MonoBehaviour
                 }
                 break;
             default:
-                Debug.Log("default - " + (SC)packet_buffer[1]);
+                Debug.Log("default - " + (int)packet_buffer[1] + " data size: " + (int)packet_buffer[0]);
                 break;
         }
     }

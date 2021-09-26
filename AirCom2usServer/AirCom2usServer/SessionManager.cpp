@@ -19,8 +19,16 @@ Session* SessionManager::GetSession(int idx) {
 array<Session*, MAX_SESSION + 1>* SessionManager::GetSessions() {
 	return &m_sessions;
 }
+ void SessionManager::JoinSession(int sessionId, Player* obj) {
+	m_sessions[sessionId]->SetPlayer(obj);
+}
 
-int SessionManager::GetSessionId(SESSION_STATE sessionState, int sessionType)
+ void SessionManager::OpenSession(int playerCnt, int sessionId, Player* obj) {
+	 m_sessions[sessionId]->OpenSession(playerCnt);
+	 m_sessions[sessionId]->SetPlayer(obj);
+ }
+
+ int SessionManager::GetSessionId(SESSION_STATE sessionState, int sessionType)
 {
 	switch (sessionState)
 	{
@@ -76,7 +84,6 @@ void SessionManager::CheckSession(int sessionId) {
 		for (int j = 0; j < sessionPlayers.size(); ++j)
 			if (sessionPlayers[i] != sessionPlayers[j])
 				PacketManager::SendAddObj(sessionPlayers[j]->m_id, 10, *(sessionPlayers[i]->GetSocket()));
-		//send_add_obj_packet(sessionPlayers[i], sessionPlayers[j]);
 	}
 
 	// 세션 세팅 ok

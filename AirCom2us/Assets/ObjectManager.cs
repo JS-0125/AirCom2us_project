@@ -78,6 +78,22 @@ public class ObjectManager : MonoBehaviour
         }
     }
 
+    public void RemoveObject(int id)
+    {
+        for(int i = 0; i < InGameObjects.Count; ++i)
+        {
+            if(InGameObjects[i].id == id)
+            {
+                if (InGameObjects[i].id < (int)OBJECT_ID_IDX.MAX_PLAYER_IDX + 1)
+                    --playerCnt;
+                else
+                    --enemyCnt;
+                DestroyImmediate(InGameObjects[i].gameObject);
+                InGameObjects.RemoveAt(i);
+            }
+        }
+    }
+
     public void SetSessionOk()
     {
         foreach (Object obj in InGameObjects)
@@ -96,7 +112,7 @@ public class ObjectManager : MonoBehaviour
     {
         InGameObjects[0].gameObject.SetActive(false);
         for(int i = 1; i < InGameObjects.Count; ++i)
-            DestroyImmediate(InGameObjects[i]);
+            DestroyImmediate(InGameObjects[i].gameObject);
         
         InGameObjects.RemoveRange(1, InGameObjects.Count - 1);
         playerCnt = 0;

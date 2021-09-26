@@ -23,17 +23,31 @@
 	return false;
 }
 
- void Player::Connected(SOCKET p_socket) {
+ void Player::Connected(SOCKET &p_socket) {
 	m_state = OBJECT_STATE::OBJST_CONNECTED;
 	m_socket = p_socket;
+	int opt_val = true;
+	setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (char*)&opt_val, sizeof(opt_val));
 }
+
+ void Player::ResetInGameData() {
+	 m_sessionId = 0;
+	 m_move_time = 0;
+	 hp = 0;
+	 m_x = 0;
+	 m_y = 0;
+ }
 
  void Player::CloseSocket() {
 	closesocket(m_socket);
+	ResetInGameData();
+	m_state = OBJECT_STATE::OBJST_FREE;
 }
 
  void Player::CloseSocket(string msg) {
 	 closesocket(m_socket);
+	 ResetInGameData();
+	 m_state = OBJECT_STATE::OBJST_FREE;
 	 cout << msg << endl;
  }
 
@@ -53,16 +67,18 @@
 	return &m_socket;
 }
 
- void Player::CheckAbnormalAction(cs_packet_move* packet) {
+ bool Player::CheckAbnormalAction(cs_packet_move* packet) {
+	 if (m_state != OBJECT_STATE::OBJST_INGAME)
+		 return false;
 	 // move time check
-	 cout << m_id<<": CheckAbnormalAction packet - " <<packet->move_time << endl;
 	 if (m_move_time == 0) {
 		 m_move_time = packet->move_time;
-		 return;
 	 }
 	 if (packet->move_time - m_move_time > 1.5f) {
-		 cout << packet->move_time - m_move_time << " - ";
-		 CloseSocket("move time is abnormal" );
+		 cout << m_id << ": CheckAbnormalAction packet - " << m_move_time << ", " << packet->move_time << endl;
+		 //CloseSocket("move time is abnormal" );
+		 return true;
 	 }
 	 m_move_time = packet->move_time;
+	 return false;
  }

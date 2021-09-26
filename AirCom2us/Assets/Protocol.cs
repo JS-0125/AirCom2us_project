@@ -29,6 +29,7 @@ public enum SC
 	SET_SESSION_OK,
 	ADD_OBJECT,
 	END_SESSION,
+	REMOVE_OBJECT,
 }
 
 
@@ -97,6 +98,15 @@ public class sc_packet_end_session
 	public byte type;
 };
 
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+
+public class sc_packet_remove_object
+{
+	public byte size;
+	public byte type;
+	public int id;
+};
+
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public class cs_packet_login
@@ -135,7 +145,7 @@ public class cs_packet_move
 public class cs_packet_logout
 {
 	byte size;
-	char type;
+	byte type;
 };
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]

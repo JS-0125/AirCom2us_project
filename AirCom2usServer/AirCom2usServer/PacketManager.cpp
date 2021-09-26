@@ -22,21 +22,23 @@
 	sc_packet_set_session_ok p;
 
 	p.type = SC::SET_SESSION_OK;
-	p.size = sizeof(p);
 	p.sessionId = sessionId;
+	p.size = sizeof(p);
 
 	ServerManager::Send(&p, socket);
+	cout << "SendSetSessionOk" << endl;
+
 }
 
  void PacketManager::SendMove(int move_id, int x, int y, SOCKET& socket)
 {
 	sc_packet_position p;
-	p.id = move_id;
-	p.size = sizeof(p);
 	p.type = SC::POSITION;
+	p.id = move_id;
 	p.x = x;
 	p.y = y;
 	p.move_time = 0;
+	p.size = sizeof(p);
 
 	ServerManager::Send(&p, socket);
 }
@@ -60,6 +62,16 @@
 
 	 p.type = SC::END_SESSION;
 	 p.size = sizeof(p);
+
+	 ServerManager::Send(&p, socket);
+ }
+
+ void PacketManager::SendRemoveObj(int obj_id, int remove_obj_id, SOCKET& socket) {
+	 sc_packet_remove_object p;
+
+	 p.type = SC::REMOVE_OBJECT;
+	 p.size = sizeof(p);
+	 p.id = remove_obj_id;
 
 	 ServerManager::Send(&p, socket);
  }

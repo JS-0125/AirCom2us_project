@@ -18,14 +18,15 @@ public:
 	void Init(int level, int exp, float x, float y);
 	void PlayerAccept(HANDLE h_iocp, int c_id);
 	bool IsState(OBJECT_STATE plst);
-	void Connected(SOCKET p_socket);
+	void Connected(SOCKET &p_socket);
+	void ResetInGameData();
 	void CloseSocket();
 	void CloseSocket(string msg);
 	int GetPrevSize();
 	void SetPrevSize(int prevSize);
 	EX_OVER* GetOverlapped();
 	SOCKET* GetSocket();
-	void CheckAbnormalAction(cs_packet_move* packet);
+	bool CheckAbnormalAction(cs_packet_move* packet);
 
 	void operator=(const Player& rhs) {
 		m_state.store(rhs.m_state);

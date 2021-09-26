@@ -19,6 +19,8 @@ public static class NetworkUtils
         networkIp = ip;
         // (1) IP 주소와 포트를 지정하고 TCP 연결 
         tc = new TcpClient();
+        tc.NoDelay = true;
+
         await tc.ConnectAsync(networkIp, port);
 
         if (tc.Connected)
@@ -52,6 +54,10 @@ public static class NetworkUtils
         remoteEP = new IPEndPoint(multicastIP, udpPort);
     }
 
+    public static void UdpDisconnect()
+    {
+        uc.Close();
+    }
 
     public static void Disconnect()
     {
