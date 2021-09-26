@@ -232,10 +232,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9828ecf597e6f9345b37dbf2afd53e75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerId: 0
   player: {fileID: 1453103235}
   objectManager: {fileID: 230333245}
-  playerId: 0
-  sessionId: 0
+  sessionIp: 
 --- !u!4 &230333244
 Transform:
   m_ObjectHideFlags: 0

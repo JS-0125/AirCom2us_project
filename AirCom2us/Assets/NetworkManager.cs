@@ -9,6 +9,7 @@ using UnityEngine;
 
 public class NetworkManager : MonoBehaviour
 {
+    public static GameState gameState = GameState.LOBBY;
     private static Thread thrdClientReceive;
     private static Thread thrdUdpClientReceive;
 
@@ -93,6 +94,9 @@ public class NetworkManager : MonoBehaviour
                         NetworkUtils.BytesToStructure(data.data, ref str, typeof(data_string));
                         sessionIp = ((data_string)str).str;
                         Debug.Log("sessionIp - " + sessionIp);
+
+                        gameState = GameState.INGAME;
+
                         StartUdpNetworking();
                         objectManager.SetSessionOk();
                     }
@@ -112,7 +116,8 @@ public class NetworkManager : MonoBehaviour
                         break;
                     }
                 case SC.END_SESSION:
-                    { 
+                    {
+                        gameState = GameState.LOBBY;
                         objectManager.EndSession();
                         EndUdpNetworking();
                         break;
@@ -363,8 +368,6 @@ public class NetworkManager : MonoBehaviour
         {
             case CS.MOVE:
                 {
-                    Debug.Log("udp - " + (CS)bytes[1]);
-
                     object packet = new cs_packet_move() as object;
                     NetworkUtils.BytesToStructure(bytes, ref packet, packet.GetType());
 
