@@ -97,3 +97,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: 0
   newPos: {x: 0, y: 0, z: 0}
+  dead: 0
+  hp: -1
+  bulletPrefab: {fileID: 1818872594613335289, guid: 793cb488486e20846adb5afa502a7344, type: 3}

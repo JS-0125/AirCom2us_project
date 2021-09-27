@@ -11,6 +11,7 @@ public class Enemy : Object
             Dead();
     }
 
+
     void OnBecameInvisible()
     {
         Vector3 viewPos = Camera.main.WorldToScreenPoint(transform.position);

@@ -40,7 +40,7 @@ HANDLE ServerManager::h_iocp;
 	PostQueuedCompletionStatus(h_iocp, 1, eventType, &over);
 }
 
- void ServerManager::Send(void* p, SOCKET& socket) {
+ bool ServerManager::Send(void* p, SOCKET& socket) {
 	int p_size = reinterpret_cast<unsigned char*>(p)[0];
 	int p_type = reinterpret_cast<unsigned char*>(p)[1];
 	//cout << "To client [" << p_id << "] : ";
@@ -52,7 +52,16 @@ HANDLE ServerManager::h_iocp;
 	s_over->m_wsabuf[0].buf = reinterpret_cast<CHAR*>(s_over->m_packetbuf);
 	s_over->m_wsabuf[0].len = p_size;
 
-	WSASend(socket, s_over->m_wsabuf, 1, NULL, 0, &s_over->m_over, 0);
+	int ret = WSASend(socket, s_over->m_wsabuf, 1, NULL, 0, &s_over->m_over, 0);
+
+	if (0 != ret) {
+		int err_no = WSAGetLastError();
+		if (WSA_IO_PENDING != err_no) {
+			DisplayError("WSARecv : ", WSAGetLastError());
+			return false;
+		}
+	}
+	return true;
 }
 
  void ServerManager::Recv(SOCKET& socket, EX_OVER& ex_over, int prev_size) {

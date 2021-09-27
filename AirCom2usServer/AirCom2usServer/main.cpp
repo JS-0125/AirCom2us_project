@@ -14,7 +14,7 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 {
 	auto obj = objManager.GetObj(p_id);
 	if (PacketManager::CheckPakcet(obj->m_state, (CS)p_buf[1]) == false) {
-		ServerManager::Disconnect(*(obj->GetSocket()));
+		obj->CloseSocket();
 		cout << "이상 행동으로 disconect 하였습니다" << endl;
 	}
 
@@ -25,7 +25,8 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 		// player 정보
 		// 추후 데이터베이스 생성 후 수정 필요
 		obj->Init(1, 100, 0, 0);
-		PacketManager::SendLoginOk(p_id, *(obj->GetSocket()));
+		if (PacketManager::SendLoginOk(p_id, *(obj->GetSocket())) == false)
+			obj->CloseSocket();
 		break;
 	}
 	case CS::MOVE: {

@@ -124,7 +124,14 @@ public class NetworkManager : MonoBehaviour
                     }
             }
         }
+
+        if (NetworkUtils.tc != null && gameState == GameState.INGAME && NetworkUtils.tc.Connected == false)
+        {
+            gameState = GameState.DISCONNECTED;
+            NetworkUtils.TryReConnect();
+        }
     }
+
 
     private void OnDisable()
     {
@@ -154,6 +161,7 @@ public class NetworkManager : MonoBehaviour
     private void EndUdpNetworking()
     {
         thrdUdpClientReceive.Abort();
+        NetworkUtils.UdpDisconnect();
     }
 
     public void OnApplicationPause(bool paused)

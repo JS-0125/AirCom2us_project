@@ -7,4 +7,5 @@ public enum GameState
     LOBBY,
     INGAME,
     STORE,
+    DISCONNECTED,
 }

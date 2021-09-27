@@ -30,11 +30,17 @@ public static class NetworkUtils
 
     }
 
-    public static void UdpConnect(string ip)
+    public static async void TryReConnect()
     {
-        uc = new UdpClient();
-        //uc.Connect(ip, 49152);
-        // 나중에 멀티캐스트나 브로드캐스트 하기
+        Debug.Log("TryReConnect");
+        tc = new TcpClient();
+        tc.NoDelay = true;
+        await tc.ConnectAsync(networkIp, port);
+
+        if (tc.Connected)
+            Debug.Log("ReConnect OK");
+        else
+            Debug.Log("ReConnect Fail");
     }
 
     public static void UdpJoinMulticast(string ip)

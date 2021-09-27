@@ -13,7 +13,7 @@ public:
 	~ServerManager();
 
 	static void PostQueued(int eventType, WSAOVERLAPPED& over);
-	static void Send(void* p, SOCKET& socket);
+	static bool Send(void* p, SOCKET& socket);
 	static void Recv(SOCKET& socket, EX_OVER& ex_over, int prev_size);
 	static void Disconnect(SOCKET& socket);
 

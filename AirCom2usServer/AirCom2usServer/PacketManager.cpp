@@ -1,6 +1,6 @@
 #include "PacketManager.h"
 
- void PacketManager::SendLoginOk(int p_id, SOCKET& socket)
+bool PacketManager::SendLoginOk(int p_id, SOCKET& socket)
 {
 	sc_packet_login_ok p;
 
@@ -14,10 +14,12 @@
 	p.type = SC::LOGIN_OK;
 	p.size = sizeof(p);
 
-	ServerManager::Send(&p, socket);
+	if (ServerManager::Send(&p, socket))
+		return true;
+	return false;
 }
 
- void PacketManager::SendSetSessionOk(string ip, SOCKET& socket)
+bool PacketManager::SendSetSessionOk(string ip, SOCKET& socket)
 {
 	sc_packet_set_session_ok p;
 
@@ -26,12 +28,14 @@
 
 	p.size = sizeof(p);
 
-	ServerManager::Send(&p, socket);
-	cout << "SendSetSessionOk" << endl;
-
+	if (ServerManager::Send(&p, socket)) {
+		return true;
+		cout << "SendSetSessionOk" << endl;
+	}
+	return false;
 }
 
- void PacketManager::SendMove(int move_id, int x, int y, SOCKET& socket)
+bool PacketManager::SendMove(int move_id, int x, int y, SOCKET& socket)
 {
 	sc_packet_position p;
 	p.type = SC::POSITION;
@@ -41,10 +45,12 @@
 	p.move_time = 0;
 	p.size = sizeof(p);
 
-	ServerManager::Send(&p, socket);
+	if (ServerManager::Send(&p, socket))
+		return true;
+	return false;
 }
 
- void PacketManager::SendAddObj(int obj_id, int hp, SOCKET& socket)
+bool PacketManager::SendAddObj(int obj_id, int hp, SOCKET& socket)
 {
 	sc_packet_add_object p;
 
@@ -55,43 +61,49 @@
 	p.type = SC::ADD_OBJECT;
 	p.size = sizeof(p);
 
-	ServerManager::Send(&p, socket);
+	if (ServerManager::Send(&p, socket))
+		return true;
+	return false;
 }
 
- void PacketManager::SendEndSession(int obj_id, SOCKET& socket) {
-	 sc_packe_end_session p;
+bool PacketManager::SendEndSession(int obj_id, SOCKET& socket) {
+	sc_packe_end_session p;
 
-	 p.type = SC::END_SESSION;
-	 p.size = sizeof(p);
+	p.type = SC::END_SESSION;
+	p.size = sizeof(p);
 
-	 ServerManager::Send(&p, socket);
- }
+	if (ServerManager::Send(&p, socket))
+		return true;
+	return false;
+}
 
- void PacketManager::SendRemoveObj(int obj_id, int remove_obj_id, SOCKET& socket) {
-	 sc_packet_remove_object p;
+bool PacketManager::SendRemoveObj(int obj_id, int remove_obj_id, SOCKET& socket) {
+	sc_packet_remove_object p;
 
-	 p.type = SC::REMOVE_OBJECT;
-	 p.size = sizeof(p);
-	 p.id = remove_obj_id;
+	p.type = SC::REMOVE_OBJECT;
+	p.size = sizeof(p);
+	p.id = remove_obj_id;
 
-	 ServerManager::Send(&p, socket);
- }
+	if (ServerManager::Send(&p, socket))
+		return true;
+	return false;
+}
 
- bool PacketManager::CheckPakcet(OBJECT_STATE objState, CS packetType) {
-	 switch (objState)
-	 {
-	 case OBJST_FREE:
-		 break;
-	 case OBJST_CONNECTED:
-		 if (packetType == CS::CREATE_SESSION)
-			 return true;
-		 break;
-	 case OBJST_INGAME:
-		 if (packetType == CS::MOVE)
-			 return true;
-		 break;
-	 default:
-		 break;
-	 }
-	 return true;
- }
+bool PacketManager::CheckPakcet(OBJECT_STATE objState, CS packetType) {
+	switch (objState)
+	{
+	case OBJST_FREE:
+		break;
+	case OBJST_CONNECTED:
+		if (packetType == CS::CREATE_SESSION)
+			return true;
+		break;
+	case OBJST_INGAME:
+		if (packetType == CS::MOVE)
+			return true;
+		break;
+	default:
+		break;
+	}
+	return true;
+}

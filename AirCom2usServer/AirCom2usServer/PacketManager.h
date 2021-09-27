@@ -6,12 +6,12 @@
 class PacketManager
 {
 public:
-	static void SendLoginOk(int p_id, SOCKET& socket);
-	static void SendSetSessionOk(string ip, SOCKET& socket);
-	static void SendMove(int move_id, int x, int y, SOCKET& socket);
-	static void SendAddObj(int obj_id, int hp, SOCKET& socket);
-	static void SendEndSession(int obj_id, SOCKET& socket);
-	static void SendRemoveObj(int obj_id, int remove_obj_id, SOCKET& socket);
+	static bool SendLoginOk(int p_id, SOCKET& socket);
+	static bool SendSetSessionOk(string ip, SOCKET& socket);
+	static bool SendMove(int move_id, int x, int y, SOCKET& socket);
+	static bool SendAddObj(int obj_id, int hp, SOCKET& socket);
+	static bool SendEndSession(int obj_id, SOCKET& socket);
+	static bool SendRemoveObj(int obj_id, int remove_obj_id, SOCKET& socket);
 	static bool CheckPakcet(OBJECT_STATE objState, CS packetType);
 };
 
