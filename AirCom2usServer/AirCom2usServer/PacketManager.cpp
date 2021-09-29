@@ -119,6 +119,22 @@ bool PacketManager::SendReconnectOk(int obj_id, int sessionId, SOCKET& socket)
 	return false;
 }
 
+bool PacketManager::SendHeartBeat(SOCKET& socket)
+{
+	cout << "SendHeartBeat" << endl;
+	sc_packet_heartbeat p;
+
+	p.type = SC::HEARTBEAT;
+	p.size = sizeof(p);
+
+	if (ServerManager::Send(&p, socket)) {
+		cout << "SendHeartBeat true" << endl;
+		return true;
+	}
+	ServerManager::Disconnect(socket);
+	return false;
+}
+
 bool PacketManager::CheckPakcet(OBJECT_STATE objState, CS packetType) {
 	switch (objState)
 	{

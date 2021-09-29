@@ -29,6 +29,7 @@ enum SC {
 	END_SESSION,
 	REMOVE_OBJECT,
 	RECONNECT_OK,
+	HEARTBEAT,
 };
 #pragma pack(push ,1)
 
@@ -83,6 +84,11 @@ struct sc_packet_reconnect_ok {
 	unsigned char size;
 	unsigned char type;
 	int sessionId;
+};
+
+struct sc_packet_heartbeat {
+	unsigned char size;
+	unsigned char type;
 };
 
 struct cs_packet_login {

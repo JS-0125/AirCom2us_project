@@ -27,6 +27,7 @@
  void Player::Connected(SOCKET &p_socket) {
 	m_state = OBJECT_STATE::OBJST_CONNECTED;
 	m_socket = p_socket;
+	ServerManager::TcpSetKeepAlive(m_socket, 1, 1, 10, 1);
 	int opt_val = true;
 	setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (char*)&opt_val, sizeof(opt_val));
 }

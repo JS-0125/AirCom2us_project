@@ -13,6 +13,7 @@ public:
 	static bool SendEndSession(int obj_id, SOCKET& socket);
 	static bool SendRemoveObj(int obj_id, int remove_obj_id, SOCKET& socket);
 	static bool SendReconnectOk(int obj_id, int sessionId, SOCKET& socket);
+	static bool SendHeartBeat(SOCKET& socket);
 	static bool CheckPakcet(OBJECT_STATE objState, CS packetType);
 };
 

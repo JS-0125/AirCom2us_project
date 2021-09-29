@@ -17,6 +17,7 @@ priority_queue<TIMER_EVENT> Timer::m_timerQueue;
  void Timer::DoTimer()
 {
 	using namespace chrono;
+	AddEvent(-1, -1, OP_HEARTBEAT, 10000);
 
 	for (;;) {
 		m_timerLock.lock();
@@ -31,6 +32,12 @@ priority_queue<TIMER_EVENT> Timer::m_timerQueue;
 				ex_over->m_op = OP_POINT_MOVE;
 				*reinterpret_cast<int*>(ex_over->m_packetbuf) = ev.target_id;
 				ServerManager::PostQueued(ev.object, ex_over->m_over); //PostQueuedCompletionStatus(h_iocp, 1, ev.object, &ex_over->m_over);
+			}
+			else if (ev.e_type == OP_HEARTBEAT) {
+				EX_OVER* ex_over = new EX_OVER;
+				ex_over->m_op = OP_HEARTBEAT;
+				//*reinterpret_cast<int*>(ex_over->m_packetbuf) = ev.target_id;
+				ServerManager::PostQueued(ev.object, ex_over->m_over);
 			}
 		}
 		else {

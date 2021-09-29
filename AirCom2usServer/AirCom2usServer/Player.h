@@ -1,6 +1,7 @@
 #pragma once
-#include"Object.h"
 #include"AirCom2us_protocol.h"
+#include"Object.h"
+#include"ServerManager.h"
 
 class Player: public Object
 {

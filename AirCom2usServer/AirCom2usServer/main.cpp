@@ -203,6 +203,11 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 				timer.AddEvent(key, sessionId, OP_POINT_MOVE, 1000); 
 			break;
 		}
+		case OP_HEARTBEAT: {
+			objManager.CheckHeartBeat();
+			timer.AddEvent(-1, -1, OP_HEARTBEAT, 10000);
+			break;
+		}
 		}
 	}
 }

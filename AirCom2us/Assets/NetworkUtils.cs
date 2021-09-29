@@ -125,7 +125,7 @@ public static class NetworkUtils
         Debug.Log("SendSessionEnd");
 
         cs_packet_session_end sessionEndPacket = new cs_packet_session_end((byte)Marshal.SizeOf(typeof(cs_packet_session_end)), Convert.ToByte(CS.SESSION_END));
-
+       
         SendPacket(ref sessionEndPacket);
     }
 
