@@ -80,25 +80,20 @@ public static class NetworkUtils
     public static void SendMovePacketTcp(Vector2 touchPos, int id, float time)
     {
         //Debug.Log("SendMovePacketTcp - " + time);
-
         cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, time, id);
-
         SendPacket(ref movePacket);
     }
 
     public static void UdpSendMovePacket(Vector2 touchPos, int id)
     {
         //Debug.Log("SendMovePacket - " + touchPos.x + ", " + touchPos.y);
-
         cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, Time.time, id);
-
         UdpSendPacket(ref movePacket);
     }
 
     public static void UdpSendReconnectDataPacket(int prevId, int newId)
     {
         Debug.Log("UdpSendReconnectDataPacket");
-
         cs_udp_packet_reconnect_data reconnectDataPacket = new cs_udp_packet_reconnect_data((byte)Marshal.SizeOf(typeof(cs_udp_packet_reconnect_data)), Convert.ToByte(CS.RECONNECT), prevId, newId);
         UdpSendPacket(ref reconnectDataPacket);
     }
@@ -106,36 +101,35 @@ public static class NetworkUtils
     public static void SendLoginPacket()
     {
         Debug.Log("SendLoginPacket");
-
         cs_packet_login loginPacket = new cs_packet_login((byte)Marshal.SizeOf(typeof(cs_packet_login)), Convert.ToByte(CS.LOGIN));
-
         SendPacket(ref loginPacket);
     }
 
     public static void SendCreateSessionPacket(int sessionType)
     {
         Debug.Log("SendCreateSessionPacket");
-
         cs_packet_create_session createSessionPacket = new cs_packet_create_session((byte)Marshal.SizeOf(typeof(cs_packet_create_session)), Convert.ToByte(CS.CREATE_SESSION), sessionType);
-
         SendPacket(ref createSessionPacket);
     }
 
     public static void SendSessionEnd() {
         Debug.Log("SendSessionEnd");
-
         cs_packet_session_end sessionEndPacket = new cs_packet_session_end((byte)Marshal.SizeOf(typeof(cs_packet_session_end)), Convert.ToByte(CS.SESSION_END));
-       
         SendPacket(ref sessionEndPacket);
     }
 
     public static void SendReconnect(int id)
     {
         Debug.Log("SendReconnect");
-
         cs_packet_reconnect reconnectPacket = new cs_packet_reconnect((byte)Marshal.SizeOf(typeof(cs_packet_reconnect)), Convert.ToByte(CS.RECONNECT), id);
-
         SendPacket(ref reconnectPacket);
+    }
+
+    public static void SendCollicionOccurred(int sessionId, int id)
+    {
+        Debug.Log("SendCollicionOccurred");
+        cs_packet_collision_occurred collicionOccurredPacket = new cs_packet_collision_occurred((byte)Marshal.SizeOf(typeof(cs_packet_collision_occurred)), Convert.ToByte(CS.COLLISION_OCCURRED),sessionId, id);
+        SendPacket(ref collicionOccurredPacket);
     }
 
     private static void SendPacket<T>(ref T data)

@@ -7,7 +7,9 @@ enum SESSION_STATE { SESSION_OPEN, SESSION_CLOSE, SESSION_INGAME };
 
 struct SessionData {
 	ENEMY_TYPE type;
+	int id;
 	int time;
+	int hp;
 	queue<int> x, y;
 };
 
@@ -32,11 +34,9 @@ public:
 	void SetPlayer(Player* player);
 	void SetSession();
 	void SetSession(int enemysCnt, vector<SessionData> enemyDatas);
-	void Reconnect(int prevId, Player* player) {
-		//RemovePlayer(prevId);
-		m_players.emplace_back(player);
-	}
+	void Reconnect(int prevId, Player* player);
 	bool CheckSession();
+	int SessionEnemyCollision(int id);
 	vector<int> GetPlayerId();
 	vector<Player*>& GetPlayers();
 	void CloseSession();

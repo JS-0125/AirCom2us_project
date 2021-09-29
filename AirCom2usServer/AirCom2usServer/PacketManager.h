@@ -14,6 +14,7 @@ public:
 	static bool SendRemoveObj(int obj_id, int remove_obj_id, SOCKET& socket);
 	static bool SendReconnectOk(int obj_id, int sessionId, SOCKET& socket);
 	static bool SendHeartBeat(SOCKET& socket);
+	static bool SendCollisionResult(int obj_id, int hp, int exp, SOCKET& socket);
 	static bool CheckPakcet(OBJECT_STATE objState, CS packetType);
 };
 

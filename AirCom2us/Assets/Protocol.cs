@@ -20,6 +20,7 @@ public enum CS
 	CREATE_SESSION,
 	SESSION_END,
 	RECONNECT,
+	COLLISION_OCCURRED,
 }
 
 public enum SC
@@ -34,6 +35,7 @@ public enum SC
 	RECONNECT_OK,
 	RECONNECT_DATA,
 	HEARTBEAT,
+	COLLISION_RESULT,
 }
 
 
@@ -119,6 +121,17 @@ public class sc_packet_reconnect_ok
 	public byte size;
 	public byte type;
 	public int sessionId;
+};
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+
+public class sc_packet_collision_result
+{
+	public byte size;
+	public byte type;
+	public int id;
+	public int hp;
+	public int exp;
 };
 
 
@@ -220,5 +233,22 @@ public class cs_udp_packet_reconnect_data
 		type = packet_type;
 		this.prevId = prevId;
 		this.newId = newId;
+	}
+};
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class cs_packet_collision_occurred
+{
+	public byte size;
+	public byte type;
+	public int sessionId;
+	public int id;
+	public cs_packet_collision_occurred() { }
+	public cs_packet_collision_occurred(byte packet_size, byte packet_type, int sessionId ,int id)
+	{
+		size = packet_size;
+		type = packet_type;
+		this.sessionId = sessionId;
+		this.id = id;
 	}
 };

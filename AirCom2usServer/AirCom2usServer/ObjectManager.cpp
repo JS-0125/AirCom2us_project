@@ -38,6 +38,17 @@
 	return -1;
 }
 
+ void ObjectManager::CheckHeartBeat() {
+	 for (int i = 0; i < m_players.size(); ++i) {
+		 if (m_players[i]->m_state != OBJECT_STATE::OBJST_FREE) {
+			 if (PacketManager::SendHeartBeat(*(m_players[i]->GetSocket())) == false) {
+				 cout << "no HeartBeat - " << i << endl;
+				 m_players[i]->m_state = OBJECT_STATE::OBJST_FREE;
+			 }
+		 }
+	 }
+ }
+
  int ObjectManager::GetEnemyId(ENEMY_TYPE enemyType) {
 	switch (enemyType) {
 	case ENEMY_TYPE::ENEMY_Plane1:

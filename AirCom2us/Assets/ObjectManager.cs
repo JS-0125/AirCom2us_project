@@ -43,35 +43,35 @@ public class ObjectManager : MonoBehaviour
         }
         else if(id < (int)OBJECT_ID_IDX.MAX_PLANE1_IDX + 1)
         {
-            var obj = Instantiate<GameObject>(Objects[2]);
+            var obj = Instantiate<GameObject>(Objects[2], new Vector3(0, 6, 0), Quaternion.identity);
             obj.GetComponent<Object>().SetObj(id, hp);
             InGameObjects.Add(obj.GetComponent<Object>());
             ++enemyCnt;
         }
         else if (id < (int)OBJECT_ID_IDX.MAX_PLANE2_IDX + 1)
         {
-            var obj = Instantiate<GameObject>(Objects[3]);
+            var obj = Instantiate<GameObject>(Objects[3], new Vector3(0, 6, 0), Quaternion.identity);
             obj.GetComponent<Object>().SetObj(id, hp);
             InGameObjects.Add(obj.GetComponent<Object>());
             ++enemyCnt;
         }
         else if (id < (int)OBJECT_ID_IDX.MAX_PLANE3_IDX + 1)
         {
-            var obj = Instantiate<GameObject>(Objects[4]);
+            var obj = Instantiate<GameObject>(Objects[4], new Vector3(0, 6, 0), Quaternion.identity);
             obj.GetComponent<Object>().SetObj(id, hp);
             InGameObjects.Add(obj.GetComponent<Object>());
             ++enemyCnt;
         }
         else if (id < (int)OBJECT_ID_IDX.MAX_BOSS1_IDX + 1)
         {
-            var obj = Instantiate<GameObject>(Objects[5]);
+            var obj = Instantiate<GameObject>(Objects[5], new Vector3(0, 6, 0), Quaternion.identity);
             obj.GetComponent<Object>().SetObj(id, hp);
             InGameObjects.Add(obj.GetComponent<Object>());
             ++enemyCnt;
         }
         else if (id < (int)OBJECT_ID_IDX.MAX_BOSS2_IDX + 1)
         {
-            var obj = Instantiate<GameObject>(Objects[6]);
+            var obj = Instantiate<GameObject>(Objects[6], new Vector3(0, 6, 0), Quaternion.identity);
             obj.GetComponent<Object>().SetObj(id, hp);
             InGameObjects.Add(obj.GetComponent<Object>());
             ++enemyCnt;
@@ -114,6 +114,14 @@ public class ObjectManager : MonoBehaviour
             if(InGameObjects[i].id == id)
                 InGameObjects[i].newPos = new Vector3(x, y, 0);
     }
+
+    public void ProcessCollision(int id, int hp)
+    {
+        for (int i = 0; i < InGameObjects.Count; ++i)
+            if (InGameObjects[i].id == id)
+                InGameObjects[i].hp = hp;
+    }
+
 
     public void EndSession()
     {

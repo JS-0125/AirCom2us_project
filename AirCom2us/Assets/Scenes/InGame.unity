@@ -235,7 +235,6 @@ MonoBehaviour:
   playerId: 0
   player: {fileID: 1453103235}
   objectManager: {fileID: 230333245}
-  sessionIp: 
 --- !u!4 &230333244
 Transform:
   m_ObjectHideFlags: 0

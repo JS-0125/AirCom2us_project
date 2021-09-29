@@ -18,18 +18,21 @@ enum CS {
 	CREATE_SESSION,
 	SESSION_END,
 	RECONNECT,
+	COLLISION_OCCURRED,
 };
 
 enum SC {
-	LOGIN_OK,
-	LOGIN_FAIL,
-	POSITION,
+	LOGIN_OK,// CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 수락
+	LOGIN_FAIL,  // CS_LOGIN의 응답 패킷, 서버에서 클라이언트의 접속을 거절
+	POSITION,   // OBJECT의 위치 변경을 클라이언트에 통보
 	SET_SESSION_OK,
 	ADD_OBJECT,
 	END_SESSION,
 	REMOVE_OBJECT,
 	RECONNECT_OK,
+	RECONNECT_DATA,
 	HEARTBEAT,
+	COLLISION_RESULT,
 };
 #pragma pack(push ,1)
 
@@ -91,6 +94,14 @@ struct sc_packet_heartbeat {
 	unsigned char type;
 };
 
+struct sc_packet_collision_result {
+	unsigned char size;
+	unsigned char type;
+	int id;
+	int hp;
+	int exp;
+};
+
 struct cs_packet_login {
 	unsigned char	size;
 	unsigned char	type;
@@ -127,4 +138,11 @@ struct cs_packet_reconnect {
 	int id;
 };
 
+struct cs_packet_collision_occurred
+{
+	unsigned char size;
+	unsigned char type;
+	int sessionId;
+	int id;
+};
 #pragma pack (pop)

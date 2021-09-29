@@ -1,6 +1,6 @@
 #include "Session.h"
 
- void Session::GetSessionTable(const char* tableName) {
+void Session::GetSessionTable(const char* tableName) {
 	lua_getglobal(m_luaState, tableName);
 
 	lua_getglobal(m_luaState, "tablelength");
@@ -35,6 +35,12 @@
 		lua_pushstring(m_luaState, "time");
 		lua_gettable(m_luaState, 2);
 		data.time = lua_tonumber(m_luaState, -1);
+		lua_pop(m_luaState, 1);
+
+		// hp
+		lua_pushstring(m_luaState, "hp");
+		lua_gettable(m_luaState, 2);
+		data.hp = lua_tonumber(m_luaState, -1);
 		lua_pop(m_luaState, 1);
 
 		//positions
@@ -78,7 +84,7 @@
 	lua_pop(m_luaState, 1);
 }
 
- void Session::GetSessionDatas(int session) {
+void Session::GetSessionDatas(int session) {
 	switch (session)
 	{
 	case 0:
@@ -97,7 +103,7 @@
 }
 
 
- void Session::CreateSession(string ip) {
+void Session::CreateSession(string ip) {
 	m_sessionIP = ip;
 	// 가상머신 자료구조
 	m_luaState = luaL_newstate();
@@ -118,7 +124,7 @@
 	lua_pop(m_luaState, 1);// eliminate set_uid from stack after call
 }
 
- void Session::OpenSession(int playersCnt) {
+void Session::OpenSession(int playersCnt) {
 	sessionState = SESSION_STATE::SESSION_OPEN;
 
 	m_playersCnt = playersCnt;
@@ -128,31 +134,46 @@
 	cout << "m_playersCnt - " << m_playersCnt << endl;
 }
 
- void Session::SetPlayer(Player* player) {
+void Session::SetPlayer(Player* player) {
 	m_players.emplace_back(player);
 	if (m_players.size() == m_playersCnt)
 		SetSession();
 }
 
- void Session::SetSession() {
+void Session::SetSession() {
 	// lua에서 가져올 데이터 결정
 	GetSessionDatas(0);
 	sessionState = SESSION_STATE::SESSION_INGAME;
 }
 
- void Session::SetSession(int enemysCnt, vector<SessionData> enemyDatas) {
+void Session::SetSession(int enemysCnt, vector<SessionData> enemyDatas) {
 	m_enemysCnt = enemysCnt;
 	m_enemyDatas = enemyDatas;
 	sessionState = SESSION_STATE::SESSION_INGAME;
 }
 
- bool Session::CheckSession() {
+void Session::Reconnect(int prevId, Player* player) {
+	//RemovePlayer(prevId);
+	m_players.emplace_back(player);
+}
+
+bool Session::CheckSession() {
 	if (m_players.size() == m_playersCnt)
 		return true;
 	return false;
 }
 
- vector<int> Session::GetPlayerId() {
+int Session::SessionEnemyCollision(int id) {
+	for (int i = 0; i < m_enemyDatas.size(); ++i)
+		if (m_enemyDatas[i].id == id) {
+			cout << m_enemyDatas[i].hp << endl;
+			m_enemyDatas[i].hp = m_enemyDatas[i].hp - 1;
+			return m_enemyDatas[i].hp;
+		}
+	return -1;
+}
+
+vector<int> Session::GetPlayerId() {
 	vector<int> tmp;
 	for (int i = 0; i < m_playersCnt; ++i)
 		tmp.push_back(m_players[i]->m_id);
@@ -160,11 +181,11 @@
 	return tmp;
 }
 
- vector<Player*>& Session::GetPlayers() {
+vector<Player*>& Session::GetPlayers() {
 	return m_players;
 }
 
- void Session::CloseSession() {
+void Session::CloseSession() {
 	for (int i = 0; i < m_playersCnt; ++i) {
 		m_players[i]->m_move_time = 0;
 		m_players[i]->m_sessionId = 0;
@@ -177,20 +198,20 @@
 	sessionState = SESSION_STATE::SESSION_CLOSE;
 }
 
- bool Session::IsSessionEnd() {
-	 for (int i = 0; i < m_playersCnt; ++i)
-		 if (m_players[i]->hp > 0)
-			 return false;
-	 return true;
- }
+bool Session::IsSessionEnd() {
+	for (int i = 0; i < m_playersCnt; ++i)
+		if (m_players[i]->hp > 0)
+			return false;
+	return true;
+}
 
- void Session::RemovePlayer(int playerId) {
-	 for (auto i = m_players.begin(); i < m_players.end(); ++i) {
-		 if ((*i)->m_id == playerId) {
-			 (*i)->CloseSocket();
-			 m_players.erase(i);
-			 break;
-		 }
-	 }
-	 --m_playersCnt;
- }
+void Session::RemovePlayer(int playerId) {
+	for (auto i = m_players.begin(); i < m_players.end(); ++i) {
+		if ((*i)->m_id == playerId) {
+			(*i)->CloseSocket();
+			m_players.erase(i);
+			break;
+		}
+	}
+	--m_playersCnt;
+}

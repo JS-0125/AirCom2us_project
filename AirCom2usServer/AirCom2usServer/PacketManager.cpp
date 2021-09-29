@@ -104,7 +104,6 @@ bool PacketManager::SendRemoveObj(int obj_id, int remove_obj_id, SOCKET& socket)
 
 bool PacketManager::SendReconnectOk(int obj_id, int sessionId, SOCKET& socket)
 {
-	cout << "SendReconnectOk" << endl;
 	sc_packet_reconnect_ok p;
 
 	p.type = SC::RECONNECT_OK;
@@ -121,7 +120,6 @@ bool PacketManager::SendReconnectOk(int obj_id, int sessionId, SOCKET& socket)
 
 bool PacketManager::SendHeartBeat(SOCKET& socket)
 {
-	cout << "SendHeartBeat" << endl;
 	sc_packet_heartbeat p;
 
 	p.type = SC::HEARTBEAT;
@@ -131,6 +129,23 @@ bool PacketManager::SendHeartBeat(SOCKET& socket)
 		cout << "SendHeartBeat true" << endl;
 		return true;
 	}
+	ServerManager::Disconnect(socket);
+	return false;
+}
+
+bool PacketManager::SendCollisionResult(int obj_id, int hp, int exp, SOCKET& socket)
+{
+	sc_packet_collision_result p;
+
+	p.type = SC::COLLISION_RESULT;
+	p.size = sizeof(p);
+	p.id = obj_id;
+	p.hp = hp;
+	p.exp = exp;
+
+	if (ServerManager::Send(&p, socket)) 
+		return true;
+	
 	ServerManager::Disconnect(socket);
 	return false;
 }

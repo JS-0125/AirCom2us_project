@@ -7,7 +7,7 @@ SessionManager::SessionManager() {
 		if (i % 1000 == 0) {
 			++j;
 		}
-		string ip = "229.1." + to_string(j) + '.' + to_string(i%1000);
+		string ip = "229.1." + to_string(j) + '.' + to_string(i % 1000);
 		//cout << ip << "\t";
 		session->CreateSession(ip);
 	}
@@ -25,16 +25,16 @@ Session* SessionManager::GetSession(int idx) {
 array<Session*, MAX_SESSION + 1>* SessionManager::GetSessions() {
 	return &m_sessions;
 }
- void SessionManager::JoinSession(int sessionId, Player* obj) {
+void SessionManager::JoinSession(int sessionId, Player* obj) {
 	m_sessions[sessionId]->SetPlayer(obj);
 }
 
- void SessionManager::OpenSession(int playerCnt, int sessionId, Player* obj) {
-	 m_sessions[sessionId]->OpenSession(playerCnt);
-	 m_sessions[sessionId]->SetPlayer(obj);
- }
+void SessionManager::OpenSession(int playerCnt, int sessionId, Player* obj) {
+	m_sessions[sessionId]->OpenSession(playerCnt);
+	m_sessions[sessionId]->SetPlayer(obj);
+}
 
- int SessionManager::GetSessionId(SESSION_STATE sessionState, int sessionType)
+int SessionManager::GetSessionId(SESSION_STATE sessionState, int sessionType)
 {
 	switch (sessionState)
 	{
@@ -72,14 +72,15 @@ void SessionManager::CheckSession(int sessionId) {
 	auto sessionPlayers = m_sessions[sessionId]->GetPlayers();
 
 	for (int i = 0; i < m_sessions[sessionId]->m_enemyDatas.size(); ++i) {
-		auto enemyData = m_sessions[sessionId]->m_enemyDatas[i];
+		auto& enemyData = m_sessions[sessionId]->m_enemyDatas[i];
 
 		int typeId = ObjectManager::GetEnemyId(enemyData.type);
 		int objId = typeId + i;
-
+		enemyData.id = objId;
+		cout << "eney hp - " << enemyData.hp << endl;
 		// enemy 정보 전송
 		for (int i = 0; i < sessionPlayers.size(); ++i)
-			PacketManager::SendAddObj(objId, 2 ,*(sessionPlayers[i]->GetSocket())); //send_add_obj_packet(sessionPlayers[i], objId);
+			PacketManager::SendAddObj(objId, enemyData.hp, *(sessionPlayers[i]->GetSocket())); //send_add_obj_packet(sessionPlayers[i], objId);
 
 		// 등장 시간
 		Timer::AddEvent(objId - typeId, sessionId, OP_POINT_MOVE, enemyData.time);
@@ -103,6 +104,13 @@ bool SessionManager::IsSessionEnd(int sessionId) {
 	if (m_sessions[sessionId]->IsSessionEnd())
 		return true;
 	return false;
+}
+void SessionManager::Reconnect(int sessionId, int prevId, Player* newObj) {
+	m_sessions[sessionId]->Reconnect(prevId, newObj);
+	newObj->m_sessionId = sessionId;
+	newObj->m_state = OBJECT_STATE::OBJST_INGAME;
+
+	PacketManager::SendReconnectOk(newObj->m_id, sessionId, *(newObj->GetSocket()));
 }
 
 // 일괄적으로 session 종료

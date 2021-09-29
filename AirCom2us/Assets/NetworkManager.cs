@@ -8,6 +8,7 @@ using UnityEngine;
 public class NetworkManager : MonoBehaviour
 {
     public static GameState gameState = GameState.LOBBY;
+    public static int sessionId;
     private static Thread thrdClientReceive;
     private static Thread thrdUdpClientReceive;
 
@@ -16,10 +17,13 @@ public class NetworkManager : MonoBehaviour
 
     public int playerId = 0;
     private int newPlayerId = 0;
+    private string sessionIp;
+    private int m_exp;
+    private int m_level;
+    private int m_hp;
+
     [SerializeField] private GameObject player;
     [SerializeField] private ObjectManager objectManager;
-    private string sessionIp;
-    private int sessionId;
     private struct sc_data_event
     {
         public SC type;
@@ -49,7 +53,12 @@ public class NetworkManager : MonoBehaviour
         public int prevId;
         public int newId;
     }
-
+    private struct data_collition_result
+    {
+        public int id;
+        public int hp;
+        public int exp;
+    }
 
     private Queue<sc_data_event> scDataQueue = new Queue<sc_data_event>();
 
@@ -90,7 +99,7 @@ public class NetworkManager : MonoBehaviour
                         }
                         playerId = playerData.id;
                         objectManager.AddObject(playerId, playerData.hp);
-
+                        m_hp = playerData.hp;
                         //player.SetActive(true);
                         //player.transform.position = new Vector3(data.x, data.y, 0);
                     }
@@ -158,8 +167,20 @@ public class NetworkManager : MonoBehaviour
                     {
                         object reconnectData = new data_reconnect_data() as object;
                         NetworkUtils.BytesToStructure(data.data, ref reconnectData, typeof(data_reconnect_data));
-                        var obj = objectManager.GetObject(((data_reconnect_data)reconnectData).prevId);
-                        obj.id = ((data_reconnect_data)reconnectData).newId;
+                        var result = (data_reconnect_data)reconnectData;
+                        var obj = objectManager.GetObject(result.prevId);
+                        obj.id = result.newId;
+                        break;
+                    }
+                case SC.COLLISION_RESULT:
+                    {
+
+                        object collisionResult = new data_collition_result() as object;
+                        NetworkUtils.BytesToStructure(data.data, ref collisionResult, typeof(data_collition_result));
+                        var result = (data_collition_result)collisionResult;
+                        Debug.Log("COLLISION_RESULT - " + result.id + "  :  " + result.hp);
+                        objectManager.ProcessCollision(result.id, result.hp);
+                        m_exp = result.exp;
                         break;
                     }
             }
@@ -313,7 +334,8 @@ public class NetworkManager : MonoBehaviour
 
                     data_obj data = new data_obj();
                     data.id = ((sc_packet_login_ok)packet).id;
-
+                    m_exp = ((sc_packet_login_ok)packet).exp;
+                    m_level = ((sc_packet_login_ok)packet).level;
                     // юсюг hp
                     data.hp = 100;
 
@@ -435,6 +457,27 @@ public class NetworkManager : MonoBehaviour
 
                     data_id data = new data_id();
                     data.id = ((sc_packet_reconnect_ok)packet).sessionId;
+                    NetworkUtils.StructToBytes(data, ref ev.data);
+
+                    scDataQueue.Enqueue(ev);
+                    break;
+                }
+            case SC.COLLISION_RESULT:
+                {
+                    Debug.Log("SC.COLLISION_RESULT");
+
+                    object packet = new sc_packet_collision_result() as object;
+                    NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
+
+                    // Enqueue
+                    sc_data_event ev;
+                    ev.type = SC.COLLISION_RESULT;
+                    ev.data = new byte[1];
+
+                    data_collition_result data = new data_collition_result();
+                    data.id = ((sc_packet_collision_result)packet).id;
+                    data.hp = ((sc_packet_collision_result)packet).hp;
+                    data.exp = ((sc_packet_collision_result)packet).exp;
                     NetworkUtils.StructToBytes(data, ref ev.data);
 
                     scDataQueue.Enqueue(ev);

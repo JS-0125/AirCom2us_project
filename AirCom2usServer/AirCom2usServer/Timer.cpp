@@ -17,7 +17,7 @@ priority_queue<TIMER_EVENT> Timer::m_timerQueue;
  void Timer::DoTimer()
 {
 	using namespace chrono;
-	AddEvent(-1, -1, OP_HEARTBEAT, 10000);
+	AddEvent(-1, -1, OP_HEARTBEAT, 20000);
 
 	for (;;) {
 		m_timerLock.lock();

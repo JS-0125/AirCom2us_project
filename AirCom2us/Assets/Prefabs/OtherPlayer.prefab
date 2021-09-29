@@ -95,6 +95,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ddcc3eef7ae71048a5b1fba19f7031f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hpPrefab: {fileID: 8061654000856916018, guid: 8f2d910fe618d0d4eb5387ef95dc4ab5, type: 3}
   id: 0
   newPos: {x: 0, y: 0, z: 0}
   dead: 0

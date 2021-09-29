@@ -8,10 +8,10 @@ class Player: public Object
 private:
 	EX_OVER m_recv_over;
 	short m_level=0;
-	int m_exp=0;
 	SOCKET m_socket;
 	int m_prev_size=0;
 public:
+	int m_exp=0;
 	int m_sessionId = -1;
 
 	Player();

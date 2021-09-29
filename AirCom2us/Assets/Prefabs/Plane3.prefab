@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5282948174981842629}
   - component: {fileID: 1975645523242452670}
   - component: {fileID: 318647692204480139}
+  - component: {fileID: -2536304143105004407}
   m_Layer: 0
   m_Name: Plane3
   m_TagString: Untagged
@@ -95,5 +96,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45ca00a037ed34946949c782cf074402, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hpPrefab: {fileID: 8061654000856916018, guid: 8f2d910fe618d0d4eb5387ef95dc4ab5, type: 3}
   id: 0
   newPos: {x: 0, y: 0, z: 0}
+  dead: 0
+  hp: -1
+--- !u!61 &-2536304143105004407
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2871195211769082057}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: -0.001982972, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1.1, y: 0.82}
+    newSize: {x: 1.1, y: 0.82}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 0.51700103, y: 0.82}
+  m_EdgeRadius: 0

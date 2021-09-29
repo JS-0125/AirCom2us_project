@@ -17,13 +17,15 @@ public class Player : Object
     {
         for (int i = 0; i < bulletCnt; ++i)
         {
-            bullets[i] = Instantiate<GameObject>(bulletPrefab);
+            bullets[i] = Instantiate<GameObject>(bulletPrefab, new Vector3(0, -5, -5), Quaternion.identity);
             bullets[i].SetActive(false);
         }
     }
 
     private void FixedUpdate()
     {
+        uiUpdate();
+
         if (hp <= 0)
             Dead();
     }
@@ -38,6 +40,7 @@ public class Player : Object
     }
     private void OnDisable()
     {
+        Debug.Log("hp - " + hp);
         StopAllCoroutines();
         //StopCoroutine(sendPositionCoroutineUdp);
         //StopCoroutine(sendPositionCoroutineTcp);
