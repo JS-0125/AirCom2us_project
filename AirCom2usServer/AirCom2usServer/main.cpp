@@ -214,7 +214,7 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 		case OP_HEARTBEAT: {
 			objManager.CheckHeartBeat();
 			sessionManager.CheckZombieSession();
-			timer.AddEvent(-1, -1, OP_HEARTBEAT, 10000);
+			timer.AddEvent(-1, -1, OP_HEARTBEAT, 20000);
 			break;
 		}
 		}

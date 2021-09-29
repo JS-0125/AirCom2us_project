@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GameDatabase.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ObjectManager.cpp" />
     <ClCompile Include="PacketManager.cpp" />
@@ -152,6 +153,7 @@
     <ClInclude Include="AirCom2us_protocol.h" />
     <ClInclude Include="default.h" />
     <ClInclude Include="Enemy.h" />
+    <ClInclude Include="GameDatabase.h" />
     <ClInclude Include="lauxlib.h" />
     <ClInclude Include="lua.h" />
     <ClInclude Include="lua.hpp" />

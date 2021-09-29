@@ -10,6 +10,7 @@ constexpr int MAX_BOSS1_IDX = 85000;
 constexpr int MAX_BOSS2_IDX = 100000;
 
 constexpr int MAX_SESSION = 10000;
+constexpr int MAX_ID_LEN = 30;
 
 enum CS {
 	LOGIN,
