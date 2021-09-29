@@ -24,9 +24,4 @@ public class UI : MonoBehaviour
             FindObjectOfType<NetworkManager>().StartNetworking("192.168.42.94");
 
     }
-
-    public void RoomJoin()
-    {
-        //FindObjectOfType<NetworkManager>().StartUdpNetworking();
-    }
 }

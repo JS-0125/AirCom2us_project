@@ -8,7 +8,7 @@ using UnityEngine;
 public class NetworkManager : MonoBehaviour
 {
     public static GameState gameState = GameState.LOBBY;
-    public static int sessionId;
+    [SerializeField] public static int sessionId;
     private static Thread thrdClientReceive;
     private static Thread thrdUdpClientReceive;
 
@@ -17,13 +17,15 @@ public class NetworkManager : MonoBehaviour
 
     public int playerId = 0;
     private int newPlayerId = 0;
-    private string sessionIp;
+    [SerializeField]  private string sessionIp;
     private int m_exp;
     private int m_level;
     private int m_hp;
+    private bool resumeUdpThread = true;
 
     [SerializeField] private GameObject player;
     [SerializeField] private ObjectManager objectManager;
+    [SerializeField] private GameObject sessionUi;
     private struct sc_data_event
     {
         public SC type;
@@ -69,6 +71,7 @@ public class NetworkManager : MonoBehaviour
 
         thrdUdpClientReceive = new Thread(new ThreadStart(UdpListenForData));
         thrdUdpClientReceive.IsBackground = true;
+        thrdUdpClientReceive.Start();
     }
 
     private void OnDisable()
@@ -89,9 +92,9 @@ public class NetworkManager : MonoBehaviour
                         Debug.Log("SC.LOGIN_OK");
                         object obj = new data_obj() as object;
                         NetworkUtils.BytesToStructure(data.data, ref obj, typeof(data_obj));
-                        
+
                         var playerData = (data_obj)obj;
-                        if(gameState == GameState.FREE)
+                        if (gameState == GameState.FREE)
                         {
                             NetworkUtils.SendReconnect(playerId);
                             newPlayerId = playerData.id;
@@ -144,9 +147,12 @@ public class NetworkManager : MonoBehaviour
                     }
                 case SC.END_SESSION:
                     {
+                        resumeUdpThread = true;
                         gameState = GameState.LOBBY;
                         objectManager.EndSession();
-                        EndUdpNetworking();
+                        Thread.Sleep(30);
+                        NetworkUtils.UdpDisconnect();
+                        sessionUi.SetActive(true);
                         break;
                     }
                 case SC.RECONNECT_OK:
@@ -154,7 +160,7 @@ public class NetworkManager : MonoBehaviour
                         object reconnectData = new data_id() as object;
                         NetworkUtils.BytesToStructure(data.data, ref reconnectData, typeof(data_id));
                         Debug.Log("RECONNECT_OK data_id - " + ((data_id)reconnectData).id);
-                        if(((data_id)reconnectData).id != -1)
+                        if (((data_id)reconnectData).id != -1)
                         {
                             gameState = GameState.INGAME;
                             NetworkUtils.UdpSendReconnectDataPacket(playerId, newPlayerId);
@@ -192,7 +198,9 @@ public class NetworkManager : MonoBehaviour
             {
                 Debug.Log("DISCONNECTED");
                 gameState = GameState.DISCONNECTED;
-                thrdClientReceive.Abort();
+                //thrdClientReceive.();
+                resumeUdpThread = true;
+
                 thrdUdpClientReceive.Abort();
                 NetworkUtils.Disconnect();
                 NetworkUtils.UdpDisconnect();
@@ -209,8 +217,10 @@ public class NetworkManager : MonoBehaviour
                 saved_packet_size = 0;
                 NetworkUtils.TryReConnect();
                 NetworkUtils.UdpJoinMulticast();
-                thrdClientReceive.Start();
-                thrdUdpClientReceive.Start();
+                resumeUdpThread = false;
+
+                //thrdClientReceive.Start();
+                //thrdUdpClientReceive.Start();
             }
         }
     }
@@ -230,14 +240,7 @@ public class NetworkManager : MonoBehaviour
     {
         NetworkUtils.UdpJoinMulticast(sessionIp);
         Debug.Log(" uc - " + NetworkUtils.uc.Client.ToString());
-
-        thrdUdpClientReceive.Start();
-    }
-
-    private void EndUdpNetworking()
-    {
-        thrdUdpClientReceive.Abort();
-        NetworkUtils.UdpDisconnect();
+        resumeUdpThread = false;
     }
 
     public void OnApplicationPause(bool paused)
@@ -260,7 +263,10 @@ public class NetworkManager : MonoBehaviour
             while (true)
             {
                 if (NetworkUtils.tc.Connected == false)
+                {
+                    Debug.Log("NetworkUtils.tc.Connected == false");
                     continue;
+                }
                 using (NetworkStream stream = NetworkUtils.tc.GetStream())
                 {
                     Byte[] buffer = new Byte[512];
@@ -283,8 +289,14 @@ public class NetworkManager : MonoBehaviour
     {
         while (true)
         {
+            if (resumeUdpThread == true)
+                continue;
+
+            if (NetworkUtils.uc.Client.Connected == false)
+                continue;
             var data = NetworkUtils.uc.ReceiveAsync();
             ProcessUdpPacket(data.Result.Buffer);
+
         }
     }
 
@@ -362,7 +374,7 @@ public class NetworkManager : MonoBehaviour
                     data.id = ((sc_packet_position)packet).id;
                     data.x = ((sc_packet_position)packet).x;
                     data.y = ((sc_packet_position)packet).y;
-                    
+
                     //Debug.Log("recv position - id: " + data.id + " " + data.x + ", " + data.y);
                     NetworkUtils.StructToBytes(data, ref ev.data);
 

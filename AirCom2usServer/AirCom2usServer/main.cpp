@@ -96,7 +96,7 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 		// 충돌 처리
 		auto session = sessionManager.GetSession(packet->sessionId);
 		int hp = session->SessionEnemyCollision(packet->id);
-		++(obj->m_exp);
+		obj->m_exp += 1;
 		auto players = session->GetPlayers();
 		for (int i = 0; i < players.size(); ++i) 
 			PacketManager::SendCollisionResult(packet->id, hp, players[i]->m_exp, *(players[i]->GetSocket()));
@@ -125,7 +125,8 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 		if (FALSE == ret) {
 			if (SERVER_ID == key) {
 				ServerManager::DisplayError("GQCS : ", WSAGetLastError());
-				exit(-1);
+				cout << "???????" << endl;
+				//exit(-1);
 			}
 			else {
 				ServerManager::DisplayError("GQCS : ", WSAGetLastError());
@@ -212,7 +213,8 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 		}
 		case OP_HEARTBEAT: {
 			objManager.CheckHeartBeat();
-			timer.AddEvent(-1, -1, OP_HEARTBEAT, 20000);
+			sessionManager.CheckZombieSession();
+			timer.AddEvent(-1, -1, OP_HEARTBEAT, 10000);
 			break;
 		}
 		}
@@ -227,6 +229,7 @@ int main()
 	thread timer_thread{ std::thread([&]() { timer.DoTimer(); }) };
 
 	timer_thread.join();
+	cout << "join" << endl;
 	for (auto& th : worker_threads)
 		th.join();
 }

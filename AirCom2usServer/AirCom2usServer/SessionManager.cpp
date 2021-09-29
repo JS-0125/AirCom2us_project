@@ -77,7 +77,7 @@ void SessionManager::CheckSession(int sessionId) {
 		int typeId = ObjectManager::GetEnemyId(enemyData.type);
 		int objId = typeId + i;
 		enemyData.id = objId;
-		cout << "eney hp - " << enemyData.hp << endl;
+		cout << "enemy hp - " << enemyData.hp << endl;
 		// enemy 정보 전송
 		for (int i = 0; i < sessionPlayers.size(); ++i)
 			PacketManager::SendAddObj(objId, enemyData.hp, *(sessionPlayers[i]->GetSocket())); //send_add_obj_packet(sessionPlayers[i], objId);

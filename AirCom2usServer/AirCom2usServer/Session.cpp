@@ -166,7 +166,7 @@ bool Session::CheckSession() {
 int Session::SessionEnemyCollision(int id) {
 	for (int i = 0; i < m_enemyDatas.size(); ++i)
 		if (m_enemyDatas[i].id == id) {
-			cout << m_enemyDatas[i].hp << endl;
+			//cout << m_enemyDatas[i].hp << endl;
 			m_enemyDatas[i].hp = m_enemyDatas[i].hp - 1;
 			return m_enemyDatas[i].hp;
 		}
@@ -193,8 +193,8 @@ void Session::CloseSession() {
 	}
 	m_players.clear();
 	m_playersCnt = 0;
-	m_enemysCnt = 0;
 	m_enemyDatas.clear();
+	m_enemysCnt = 0;
 	sessionState = SESSION_STATE::SESSION_CLOSE;
 }
 

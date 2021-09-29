@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Threading;
 using UnityEngine;
 
 public static class NetworkUtils
@@ -9,8 +10,8 @@ public static class NetworkUtils
     public static TcpClient tc;
     public static UdpClient uc;
     private static string networkIp;
-    private static int port= 49152;
-    private static int udpPort= 49151;
+    private static int port = 49152;
+    private static int udpPort = 49151;
     private static IPEndPoint remoteEP;
     private static IPAddress multicastIP;
     private static IPEndPoint localEP;
@@ -28,6 +29,7 @@ public static class NetworkUtils
         else
             Debug.Log("Connect Fail");
 
+        uc = new UdpClient(udpPort);
     }
 
     public static async void TryReConnect()
@@ -35,7 +37,7 @@ public static class NetworkUtils
         Debug.Log("TryReConnect");
         tc = new TcpClient();
         tc.NoDelay = true;
-        
+
         await tc.ConnectAsync(networkIp, port);
 
         if (tc.Connected)
@@ -49,17 +51,14 @@ public static class NetworkUtils
 
     public static void UdpJoinMulticast(string ip)
     {
-        uc = new UdpClient(udpPort);
-
         multicastIP = IPAddress.Parse(ip);
         uc.JoinMulticastGroup(multicastIP);
-
         remoteEP = new IPEndPoint(multicastIP, udpPort);
     }
 
     public static void UdpJoinMulticast()
     {
-        uc = new UdpClient(udpPort);
+        //uc = new UdpClient(udpPort);
         uc.JoinMulticastGroup(multicastIP);
 
         remoteEP = new IPEndPoint(multicastIP, udpPort);
@@ -67,8 +66,13 @@ public static class NetworkUtils
 
     public static void UdpDisconnect()
     {
-        if(uc != null)
-            uc.Close();
+        Debug.Log("UdpDisconnect");
+        if (uc != null)
+        {
+            uc.DropMulticastGroup(multicastIP);
+            //uc.Dispose();
+            //uc.Close();
+        }
     }
 
     public static void Disconnect()
@@ -112,7 +116,8 @@ public static class NetworkUtils
         SendPacket(ref createSessionPacket);
     }
 
-    public static void SendSessionEnd() {
+    public static void SendSessionEnd()
+    {
         Debug.Log("SendSessionEnd");
         cs_packet_session_end sessionEndPacket = new cs_packet_session_end((byte)Marshal.SizeOf(typeof(cs_packet_session_end)), Convert.ToByte(CS.SESSION_END));
         SendPacket(ref sessionEndPacket);
@@ -128,7 +133,7 @@ public static class NetworkUtils
     public static void SendCollicionOccurred(int sessionId, int id)
     {
         Debug.Log("SendCollicionOccurred");
-        cs_packet_collision_occurred collicionOccurredPacket = new cs_packet_collision_occurred((byte)Marshal.SizeOf(typeof(cs_packet_collision_occurred)), Convert.ToByte(CS.COLLISION_OCCURRED),sessionId, id);
+        cs_packet_collision_occurred collicionOccurredPacket = new cs_packet_collision_occurred((byte)Marshal.SizeOf(typeof(cs_packet_collision_occurred)), Convert.ToByte(CS.COLLISION_OCCURRED), sessionId, id);
         SendPacket(ref collicionOccurredPacket);
     }
 

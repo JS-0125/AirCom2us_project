@@ -27,7 +27,7 @@ private:
 public:
 	string m_sessionIP = ""; // udp ip
 	vector<SessionData> m_enemyDatas;
-	SESSION_STATE sessionState = SESSION_STATE::SESSION_CLOSE;
+	atomic<SESSION_STATE> sessionState = SESSION_STATE::SESSION_CLOSE;
 	int m_sessionType = -1;
 	void CreateSession(string ip);
 	void OpenSession(int playersCnt);

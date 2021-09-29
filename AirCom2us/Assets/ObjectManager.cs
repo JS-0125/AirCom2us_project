@@ -130,7 +130,8 @@ public class ObjectManager : MonoBehaviour
             DestroyImmediate(InGameObjects[i].gameObject);
         
         InGameObjects.RemoveRange(1, InGameObjects.Count - 1);
-        playerCnt = 0;
+        Debug.Log("InGameObjects.Count - " + InGameObjects.Count);
+        playerCnt = 1;
         enemyCnt = 0;
     }
 

@@ -39,6 +39,8 @@
 }
 
  void ObjectManager::CheckHeartBeat() {
+	 cout << "HeartBeat" << endl;
+
 	 for (int i = 0; i < m_players.size(); ++i) {
 		 if (m_players[i]->m_state != OBJECT_STATE::OBJST_FREE) {
 			 if (PacketManager::SendHeartBeat(*(m_players[i]->GetSocket())) == false) {
