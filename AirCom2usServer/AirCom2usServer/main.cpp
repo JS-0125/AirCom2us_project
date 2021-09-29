@@ -20,7 +20,7 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 
 	switch (p_buf[1]) {
 	case CS::LOGIN: {
-		cout << "CS Login" << endl;
+		cout << "CS Login - " << p_id << endl;
 		//cs_packet_login* packet = reinterpret_cast<cs_packet_login*>(p_buf);
 		// player 정보
 		// 추후 데이터베이스 생성 후 수정 필요
@@ -79,9 +79,19 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 
 		// session 종료
 		sessionManager.EndSession(obj->m_sessionId);
-	}
 		break;
-				
+	}
+	case CS::RECONNECT: {
+		cout << "CS::RECONNECT" << endl;
+		cs_packet_reconnect* packet = reinterpret_cast<cs_packet_reconnect*>(p_buf);
+		int sessionId = objManager.GetPlayerInSession(packet->id);
+		cout << "sessiondId - " << sessionId << "  packet->id - " << packet->id << endl;
+		if (sessionId != -1) {
+			sessionManager.Reconnect(sessionId, packet->id, obj);
+			objManager.GetObj(packet->id)->m_state = OBJECT_STATE::OBJST_FREE;
+		}
+		break;
+	}
 	default:
 		cout << "Unknown Packet Type from Client[" << p_id;
 		cout << "] Packet Type [" << (int)p_buf[1] << "]";
@@ -100,6 +110,8 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 			&ikey, &over, INFINITE);
 
 		int key = static_cast<int>(ikey);
+
+		cout << "key - " << key << endl;
 		if (FALSE == ret) {
 			if (SERVER_ID == key) {
 				ServerManager::DisplayError("GQCS : ", WSAGetLastError());
@@ -107,6 +119,7 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 			}
 			else {
 				ServerManager::DisplayError("GQCS : ", WSAGetLastError());
+				cout << "여기! - "<< key << endl;
 				ServerManager::Disconnect(*(objManager.GetObj(key)->GetSocket()));
 			}
 		}
@@ -132,7 +145,6 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 			if (0 != num_data)
 				memcpy(ex_over->m_packetbuf, packet_ptr, num_data);
 			ServerManager::Recv(*(player->GetSocket()), *(player->GetOverlapped()), player->GetPrevSize());
-			//do_recv(key);
 			break;
 		}
 		case OP_SEND:
@@ -141,6 +153,7 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 		case OP_ACCEPT: {
 			cout << "accept" << endl;
 			int c_id = objManager.GetNewPlayerId(ex_over->m_csocket);
+			cout << "new id :" << c_id << endl;
 			Player* player = objManager.GetObj(c_id);
 
 			if (-1 != c_id) {
@@ -158,8 +171,6 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 			break;
 		}
 		case OP_POINT_MOVE: {
-			//auto& enemy = *static_cast<Enemy*>(objects[key]);
-			//int time = static_cast<unsigned>(duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
 			int sessionId = *reinterpret_cast<int*>(ex_over->m_packetbuf);
 			auto session = sessionManager.GetSession(sessionId);
 			auto enemy = &session->m_enemyDatas[key];
@@ -173,10 +184,22 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 			enemy->y.pop();
 
 			auto players = session->GetPlayers();
-			for (int i = 0; i < players.size(); ++i) 
-				PacketManager::SendMove(key + ObjectManager::GetEnemyId(enemy->type), x, y, *(players[i]->GetSocket()));
+			vector<int> disconnectIds;
+			// send move packet
+			for (int i = 0; i < players.size(); ++i) {
+				if (PacketManager::SendMove(key + ObjectManager::GetEnemyId(enemy->type), x, y, *(players[i]->GetSocket()))
+					== false) {
+					cout << players[i]->m_id << " - disconnetced!!!" << endl;
+					disconnectIds.push_back(players[i]->m_id);
+					//session->RemovePlayer(players[i]->m_id);
+				}
+			}
+			// disconnect된 플레이어 remove
+			if (disconnectIds.size() != 0)
+				for (const auto& id : disconnectIds)
+					session->RemovePlayer(id);
 
-			if (enemy->x.empty() == false)
+			if (players.size() != 0 && enemy->x.empty() == false)
 				timer.AddEvent(key, sessionId, OP_POINT_MOVE, 1000); 
 			break;
 		}

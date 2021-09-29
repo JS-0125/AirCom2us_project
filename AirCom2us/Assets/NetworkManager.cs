@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using UnityEngine;
 
@@ -16,11 +14,12 @@ public class NetworkManager : MonoBehaviour
     private int saved_packet_size = 0;
     private Byte[] packet_buffer = new Byte[2048];
 
-    public int playerId;
-
+    public int playerId = 0;
+    private int newPlayerId = 0;
     [SerializeField] private GameObject player;
     [SerializeField] private ObjectManager objectManager;
-    [SerializeField] private string sessionIp;
+    private string sessionIp;
+    private int sessionId;
     private struct sc_data_event
     {
         public SC type;
@@ -30,30 +29,43 @@ public class NetworkManager : MonoBehaviour
     {
         public int id;
     }
-
-    private struct data_string
+    private struct data_session
     {
+        public int sessionId;
         public string str;
     }
-
     private struct data_position
     {
         public int id;
         public float x, y;
     }
-
     private struct data_obj
     {
         public int id;
         public int hp;
     }
+    private struct data_reconnect_data
+    {
+        public int prevId;
+        public int newId;
+    }
+
 
     private Queue<sc_data_event> scDataQueue = new Queue<sc_data_event>();
 
     private void Start()
     {
+        thrdClientReceive = new Thread(new ThreadStart(ListenForData));
+        thrdClientReceive.IsBackground = true;
+
         thrdUdpClientReceive = new Thread(new ThreadStart(UdpListenForData));
         thrdUdpClientReceive.IsBackground = true;
+    }
+
+    private void OnDisable()
+    {
+        NetworkUtils.Disconnect();
+        thrdUdpClientReceive.Abort();
     }
 
     private void Update()
@@ -70,6 +82,12 @@ public class NetworkManager : MonoBehaviour
                         NetworkUtils.BytesToStructure(data.data, ref obj, typeof(data_obj));
                         
                         var playerData = (data_obj)obj;
+                        if(gameState == GameState.FREE)
+                        {
+                            NetworkUtils.SendReconnect(playerId);
+                            newPlayerId = playerData.id;
+                            break;
+                        }
                         playerId = playerData.id;
                         objectManager.AddObject(playerId, playerData.hp);
 
@@ -89,11 +107,11 @@ public class NetworkManager : MonoBehaviour
                     break;
                 case SC.SET_SESSION_OK:
                     {
-                        object str = new data_string() as object;
+                        object sessionData = new data_session() as object;
 
-                        NetworkUtils.BytesToStructure(data.data, ref str, typeof(data_string));
-                        sessionIp = ((data_string)str).str;
-                        Debug.Log("sessionIp - " + sessionIp);
+                        NetworkUtils.BytesToStructure(data.data, ref sessionData, typeof(data_session));
+                        sessionIp = ((data_session)sessionData).str;
+                        sessionId = ((data_session)sessionData).sessionId;
 
                         gameState = GameState.INGAME;
 
@@ -122,31 +140,68 @@ public class NetworkManager : MonoBehaviour
                         EndUdpNetworking();
                         break;
                     }
+                case SC.RECONNECT_OK:
+                    {
+                        object reconnectData = new data_id() as object;
+                        NetworkUtils.BytesToStructure(data.data, ref reconnectData, typeof(data_id));
+                        Debug.Log("RECONNECT_OK data_id - " + ((data_id)reconnectData).id);
+                        if(((data_id)reconnectData).id != -1)
+                        {
+                            gameState = GameState.INGAME;
+                            NetworkUtils.UdpSendReconnectDataPacket(playerId, newPlayerId);
+                            objectManager.GetObject(playerId).id = newPlayerId;
+                            playerId = newPlayerId;
+                        }
+                        break;
+                    }
+                case SC.RECONNECT_DATA:
+                    {
+                        object reconnectData = new data_reconnect_data() as object;
+                        NetworkUtils.BytesToStructure(data.data, ref reconnectData, typeof(data_reconnect_data));
+                        var obj = objectManager.GetObject(((data_reconnect_data)reconnectData).prevId);
+                        obj.id = ((data_reconnect_data)reconnectData).newId;
+                        break;
+                    }
             }
         }
 
-        if (NetworkUtils.tc != null && gameState == GameState.INGAME && NetworkUtils.tc.Connected == false)
+        if (Application.internetReachability == NetworkReachability.NotReachable)
         {
-            gameState = GameState.DISCONNECTED;
-            NetworkUtils.TryReConnect();
+            if (NetworkUtils.tc != null && gameState != GameState.DISCONNECTED && NetworkUtils.tc.Connected == false)
+            {
+                Debug.Log("DISCONNECTED");
+                gameState = GameState.DISCONNECTED;
+                thrdClientReceive.Abort();
+                thrdUdpClientReceive.Abort();
+                NetworkUtils.Disconnect();
+                NetworkUtils.UdpDisconnect();
+            }
+        }
+        if (gameState == GameState.DISCONNECTED)
+        {
+            if (Application.internetReachability != NetworkReachability.NotReachable)
+            {
+                // 연결이 되었을 때
+                Debug.Log("네트워크 연결!");
+
+                gameState = GameState.FREE;
+                saved_packet_size = 0;
+                NetworkUtils.TryReConnect();
+                NetworkUtils.UdpJoinMulticast();
+                thrdClientReceive.Start();
+                thrdUdpClientReceive.Start();
+            }
         }
     }
 
-
-    private void OnDisable()
-    {
-        NetworkUtils.Disconnect();
-    }
 
     public void StartNetworking(string ip)
     {
         NetworkUtils.Connect(ip);
 
-        Debug.Log(" tc - " + NetworkUtils.tc.Client.ToString());
         NetworkUtils.SendLoginPacket();
+        Debug.Log(" tc - " + NetworkUtils.tc.Client.ToString());
 
-        thrdClientReceive = new Thread(new ThreadStart(ListenForData));
-        thrdClientReceive.IsBackground = true;
         thrdClientReceive.Start();
     }
 
@@ -177,12 +232,14 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
-        private void ListenForData()
+    private void ListenForData()
     {
         try
         {
             while (true)
             {
+                if (NetworkUtils.tc.Connected == false)
+                    continue;
                 using (NetworkStream stream = NetworkUtils.tc.GetStream())
                 {
                     Byte[] buffer = new Byte[512];
@@ -205,10 +262,7 @@ public class NetworkManager : MonoBehaviour
     {
         while (true)
         {
-            //Debug.Log("UdpListenForData");
             var data = NetworkUtils.uc.ReceiveAsync();
-            //Debug.Log("data.Result.Buffer.Length - " + data.Result.Buffer.Length);
-
             ProcessUdpPacket(data.Result.Buffer);
         }
     }
@@ -221,7 +275,7 @@ public class NetworkManager : MonoBehaviour
         int in_packet_size = 0;
         while (0 != io_byte)
         {
-            Debug.Log("io_byte - " + io_byte);
+            //Debug.Log("io_byte - " + io_byte);
             if (0 == in_packet_size) in_packet_size = ptr[ptr_idx];
             if (io_byte + saved_packet_size >= in_packet_size)
             {
@@ -272,7 +326,7 @@ public class NetworkManager : MonoBehaviour
                 break;
             case SC.POSITION:
                 {
-                    Debug.Log("SC.POSITION");
+                    //Debug.Log("SC.POSITION");
 
                     object packet = new sc_packet_position() as object;
                     NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
@@ -287,7 +341,7 @@ public class NetworkManager : MonoBehaviour
                     data.x = ((sc_packet_position)packet).x;
                     data.y = ((sc_packet_position)packet).y;
                     
-                    Debug.Log("recv position - id: " + data.id + " " + data.x + ", " + data.y);
+                    //Debug.Log("recv position - id: " + data.id + " " + data.x + ", " + data.y);
                     NetworkUtils.StructToBytes(data, ref ev.data);
 
                     scDataQueue.Enqueue(ev);
@@ -304,9 +358,12 @@ public class NetworkManager : MonoBehaviour
                     ev.type = SC.SET_SESSION_OK;
                     ev.data = new byte[1];
 
-                    data_string data = new data_string();
+                    data_session data = new data_session();
+                    data.sessionId = ((sc_packet_set_session_ok)packet).sessionId;
                     data.str = new string(((sc_packet_set_session_ok)packet).ip);
+
                     Debug.Log(data.str.ToString());
+
                     NetworkUtils.StructToBytes(data, ref ev.data);
                     scDataQueue.Enqueue(ev);
                 }
@@ -364,6 +421,25 @@ public class NetworkManager : MonoBehaviour
                     scDataQueue.Enqueue(ev);
                 }
                 break;
+            case SC.RECONNECT_OK:
+                {
+                    Debug.Log("SC.RECONNECT_OK");
+
+                    object packet = new sc_packet_reconnect_ok() as object;
+                    NetworkUtils.BytesToStructure(packet_buffer, ref packet, packet.GetType());
+
+                    // Enqueue
+                    sc_data_event ev;
+                    ev.type = SC.RECONNECT_OK;
+                    ev.data = new byte[1];
+
+                    data_id data = new data_id();
+                    data.id = ((sc_packet_reconnect_ok)packet).sessionId;
+                    NetworkUtils.StructToBytes(data, ref ev.data);
+
+                    scDataQueue.Enqueue(ev);
+                    break;
+                }
             default:
                 Debug.Log("default - " + (int)packet_buffer[1] + " data size: " + (int)packet_buffer[0]);
                 break;
@@ -392,8 +468,28 @@ public class NetworkManager : MonoBehaviour
                     NetworkUtils.StructToBytes(data, ref ev.data);
 
                     scDataQueue.Enqueue(ev);
+                    break;
                 }
-                break;
+            case CS.RECONNECT:
+                {
+                    Debug.Log("UDP RECONNECT Data Recv");
+                    object packet = new cs_udp_packet_reconnect_data() as object;
+                    NetworkUtils.BytesToStructure(bytes, ref packet, packet.GetType());
+
+                    // Enqueue
+                    sc_data_event ev;
+                    ev.type = SC.RECONNECT_DATA;
+                    ev.data = new byte[1];
+
+                    data_reconnect_data data = new data_reconnect_data();
+                    data.prevId = ((cs_udp_packet_reconnect_data)packet).prevId;
+                    data.newId = ((cs_udp_packet_reconnect_data)packet).newId;
+
+                    NetworkUtils.StructToBytes(data, ref ev.data);
+
+                    scDataQueue.Enqueue(ev);
+                    break;
+                }
             default:
                 Debug.Log("default - " + (SC)bytes[1]);
                 break;

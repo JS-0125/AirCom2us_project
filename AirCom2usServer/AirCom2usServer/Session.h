@@ -32,19 +32,15 @@ public:
 	void SetPlayer(Player* player);
 	void SetSession();
 	void SetSession(int enemysCnt, vector<SessionData> enemyDatas);
+	void Reconnect(int prevId, Player* player) {
+		//RemovePlayer(prevId);
+		m_players.emplace_back(player);
+	}
 	bool CheckSession();
 	vector<int> GetPlayerId();
 	vector<Player*>& GetPlayers();
 	void CloseSession();
 	bool IsSessionEnd();
-	void RemovePlayer(int playerId) {
-		for (auto i = m_players.begin(); i < m_players.end(); ++i) {
-			if ((*i)->m_id == playerId) {
-				m_players.erase(i);
-				break;
-			}
-		}
-		--m_playersCnt;
-	}
+	void RemovePlayer(int playerId);
 };
 

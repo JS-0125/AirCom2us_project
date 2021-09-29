@@ -20,6 +20,13 @@
 	return m_players[idx];
 }
 
+ int ObjectManager::GetPlayerInSession(int id) {
+	 if (m_players[id]->m_state == OBJECT_STATE::OBJST_INGAME) {
+		 return m_players[id]->m_sessionId;
+	 }
+	 return -1;
+ }
+
  int ObjectManager::GetNewPlayerId(SOCKET p_socket)
 {
 	for (int i = SERVER_ID + 1; i < MAX_PLAYER_IDX + 1; ++i) {

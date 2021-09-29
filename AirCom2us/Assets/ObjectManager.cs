@@ -77,6 +77,13 @@ public class ObjectManager : MonoBehaviour
             ++enemyCnt;
         }
     }
+    public Object GetObject(int id)
+    {
+        for (int i = 0; i < InGameObjects.Count; ++i)
+            if (InGameObjects[i].id == id)
+                return InGameObjects[i];
+        return null;
+    }
 
     public void RemoveObject(int id)
     {

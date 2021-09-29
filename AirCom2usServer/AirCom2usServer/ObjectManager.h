@@ -13,6 +13,7 @@ public:
 
 	array <Player*, MAX_USER + 1>* GetPlayers();
 	Player* GetObj(int idx);
+	int GetPlayerInSession(int id);
 	int GetNewPlayerId(SOCKET p_socket);
 	static int GetEnemyId(ENEMY_TYPE enemyType);
 };

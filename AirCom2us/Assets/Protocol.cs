@@ -19,6 +19,7 @@ public enum CS
     LOGOUT,     // 클라이언트 종료
 	CREATE_SESSION,
 	SESSION_END,
+	RECONNECT,
 }
 
 public enum SC
@@ -30,6 +31,8 @@ public enum SC
 	ADD_OBJECT,
 	END_SESSION,
 	REMOVE_OBJECT,
+	RECONNECT_OK,
+	RECONNECT_DATA,
 }
 
 
@@ -77,6 +80,7 @@ public class sc_packet_set_session_ok
 {
 	public byte size;
 	public byte type;
+	public int sessionId;
 	[MarshalAs(UnmanagedType.ByValArray, SizeConst = 30)] public char[] ip;
 };
 
@@ -105,6 +109,15 @@ public class sc_packet_remove_object
 	public byte size;
 	public byte type;
 	public int id;
+};
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+
+public class sc_packet_reconnect_ok
+{
+	public byte size;
+	public byte type;
+	public int sessionId;
 };
 
 
@@ -174,5 +187,37 @@ public class cs_packet_session_end
 	{
 		size = packet_size;
 		type = packet_type;
+	}
+};
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class cs_packet_reconnect
+{
+	public byte size;
+	public byte type;
+	public int m_id;
+	public cs_packet_reconnect() { }
+	public cs_packet_reconnect(byte packet_size, byte packet_type, int id)
+	{
+		size = packet_size;
+		type = packet_type;
+		m_id = id;
+	}
+};
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public class cs_udp_packet_reconnect_data
+{
+	public byte size;
+	public byte type;
+	public int prevId;
+	public int newId;
+	public cs_udp_packet_reconnect_data() { }
+	public cs_udp_packet_reconnect_data(byte packet_size, byte packet_type, int prevId, int newId)
+	{
+		size = packet_size;
+		type = packet_type;
+		this.prevId = prevId;
+		this.newId = newId;
 	}
 };

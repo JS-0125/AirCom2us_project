@@ -20,6 +20,13 @@ public:
 	int GetSessionId(SESSION_STATE sessionState, int sessionType);
 	void CheckSession(int sessionId);
 	bool IsSessionEnd(int sessionId);
+	void Reconnect(int sessionId, int prevId, Player* newObj) {
+		m_sessions[sessionId]->Reconnect(prevId, newObj);
+		newObj->m_sessionId = sessionId;
+		newObj->m_state = OBJECT_STATE::OBJST_INGAME;
+
+		PacketManager::SendReconnectOk(newObj->m_id, sessionId, *(newObj->GetSocket()));
+	}
 
 	// 일괄적으로 session 종료
 	void EndSession(int sessionId);

@@ -94,7 +94,7 @@ void SessionManager::CheckSession(int sessionId) {
 
 	// 세션 세팅 ok
 	for (int i = 0; i < sessionPlayers.size(); ++i) {
-		PacketManager::SendSetSessionOk(m_sessions[sessionId]->m_sessionIP, *(sessionPlayers[i]->GetSocket()));
+		PacketManager::SendSetSessionOk(m_sessions[sessionId]->m_sessionIP, sessionId, *(sessionPlayers[i]->GetSocket()));
 		sessionPlayers[i]->m_state = OBJECT_STATE::OBJST_INGAME;
 	}
 }

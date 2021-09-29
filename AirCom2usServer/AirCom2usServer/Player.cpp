@@ -5,6 +5,7 @@
 }
 
  void Player::Init(int level, int exp, float x, float y) {
+	ResetInGameData();
 	m_level = level;
 	m_exp = exp;
 	m_x = x;
@@ -40,14 +41,14 @@
 
  void Player::CloseSocket() {
 	closesocket(m_socket);
-	ResetInGameData();
-	m_state = OBJECT_STATE::OBJST_FREE;
+	//ResetInGameData();
+	//m_state = OBJECT_STATE::OBJST_FREE;
 }
 
  void Player::CloseSocket(string msg) {
 	 closesocket(m_socket);
-	 ResetInGameData();
-	 m_state = OBJECT_STATE::OBJST_FREE;
+	 //ResetInGameData();
+	 //m_state = OBJECT_STATE::OBJST_FREE;
 	 cout << msg << endl;
  }
 

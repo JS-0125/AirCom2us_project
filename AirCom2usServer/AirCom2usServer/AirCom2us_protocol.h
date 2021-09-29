@@ -17,6 +17,7 @@ enum CS {
 	LOGOUT,
 	CREATE_SESSION,
 	SESSION_END,
+	RECONNECT,
 };
 
 enum SC {
@@ -27,6 +28,7 @@ enum SC {
 	ADD_OBJECT,
 	END_SESSION,
 	REMOVE_OBJECT,
+	RECONNECT_OK,
 };
 #pragma pack(push ,1)
 
@@ -55,6 +57,7 @@ struct sc_packet_position {
 struct sc_packet_set_session_ok {
 	unsigned char size;
 	unsigned char type;
+	int sessionId;
 	char ip[30];
 };
 
@@ -74,6 +77,12 @@ struct sc_packet_remove_object {
 	unsigned char size;
 	unsigned char type;
 	int id;
+};
+
+struct sc_packet_reconnect_ok {
+	unsigned char size;
+	unsigned char type;
+	int sessionId;
 };
 
 struct cs_packet_login {
@@ -101,9 +110,15 @@ struct cs_packet_create_session {
 	// 어떤 스테이지인지 확인할 수 있는 변수 추가 가능
 };
 
-struct cs_packet_cs_packet_session_endcreate_session {
+struct cs_packet_session_end {
 	unsigned char	size;
 	unsigned char	type;
+};
+
+struct cs_packet_reconnect {
+	unsigned char	size;
+	unsigned char	type;
+	int id;
 };
 
 #pragma pack (pop)

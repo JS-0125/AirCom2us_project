@@ -57,7 +57,7 @@ HANDLE ServerManager::h_iocp;
 	if (0 != ret) {
 		int err_no = WSAGetLastError();
 		if (WSA_IO_PENDING != err_no) {
-			DisplayError("WSARecv : ", WSAGetLastError());
+			DisplayError("WSASend : ", WSAGetLastError());
 			return false;
 		}
 	}

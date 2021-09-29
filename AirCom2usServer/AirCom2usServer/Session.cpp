@@ -183,3 +183,14 @@
 			 return false;
 	 return true;
  }
+
+ void Session::RemovePlayer(int playerId) {
+	 for (auto i = m_players.begin(); i < m_players.end(); ++i) {
+		 if ((*i)->m_id == playerId) {
+			 (*i)->CloseSocket();
+			 m_players.erase(i);
+			 break;
+		 }
+	 }
+	 --m_playersCnt;
+ }

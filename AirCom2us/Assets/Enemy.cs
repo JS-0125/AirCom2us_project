@@ -15,7 +15,7 @@ public class Enemy : Object
     void OnBecameInvisible()
     {
         Vector3 viewPos = Camera.main.WorldToScreenPoint(transform.position);
-        Debug.Log("vewPos - " + viewPos + "   position - " + transform.position);
+        //Debug.Log("vewPos - " + viewPos + "   position - " + transform.position);
         if (viewPos.y < -5)
             Dead();
     }

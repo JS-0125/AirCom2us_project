@@ -58,7 +58,8 @@ public class Player : Object
     {
         while (true)
         {
-            NetworkUtils.UdpSendMovePacket(this.transform.position, id);
+            if(NetworkManager.gameState == GameState.INGAME)
+                NetworkUtils.UdpSendMovePacket(this.transform.position, id);
             yield return new WaitForSeconds(0.1f);
         }
     }
@@ -67,7 +68,8 @@ public class Player : Object
     {
         while (true)
         {
-            NetworkUtils.SendMovePacketTcp(transform.position, id,Time.time);
+            if (NetworkManager.gameState == GameState.INGAME)
+                NetworkUtils.SendMovePacketTcp(transform.position, id,Time.time);
             yield return new WaitForSeconds(1f);
         }
     }

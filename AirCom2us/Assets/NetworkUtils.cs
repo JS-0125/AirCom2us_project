@@ -35,26 +35,31 @@ public static class NetworkUtils
         Debug.Log("TryReConnect");
         tc = new TcpClient();
         tc.NoDelay = true;
+        
         await tc.ConnectAsync(networkIp, port);
 
         if (tc.Connected)
+        {
             Debug.Log("ReConnect OK");
+            SendLoginPacket();
+        }
         else
             Debug.Log("ReConnect Fail");
     }
 
     public static void UdpJoinMulticast(string ip)
     {
-        // (1) UdpClient 객체 성성
         uc = new UdpClient(udpPort);
 
-        // (2) UDP 로컬 IP/포트에 바인딩            
-        // udp.Client.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.ReuseAddress, true);
-        //localEP = new IPEndPoint(IPAddress.Any, udpPort);
-        //uc.Client.Bind(localEP);
-
-        // (3) Multicast 그룹에 Join
         multicastIP = IPAddress.Parse(ip);
+        uc.JoinMulticastGroup(multicastIP);
+
+        remoteEP = new IPEndPoint(multicastIP, udpPort);
+    }
+
+    public static void UdpJoinMulticast()
+    {
+        uc = new UdpClient(udpPort);
         uc.JoinMulticastGroup(multicastIP);
 
         remoteEP = new IPEndPoint(multicastIP, udpPort);
@@ -62,17 +67,19 @@ public static class NetworkUtils
 
     public static void UdpDisconnect()
     {
-        uc.Close();
+        if(uc != null)
+            uc.Close();
     }
 
     public static void Disconnect()
     {
-        tc.Close();
+        if (tc != null)
+            tc.Close();
     }
 
     public static void SendMovePacketTcp(Vector2 touchPos, int id, float time)
     {
-        Debug.Log("SendMovePacketTcp - " + time);
+        //Debug.Log("SendMovePacketTcp - " + time);
 
         cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, time, id);
 
@@ -86,6 +93,14 @@ public static class NetworkUtils
         cs_packet_move movePacket = new cs_packet_move((byte)Marshal.SizeOf(typeof(cs_packet_move)), Convert.ToByte(CS.MOVE), touchPos.x, touchPos.y, Time.time, id);
 
         UdpSendPacket(ref movePacket);
+    }
+
+    public static void UdpSendReconnectDataPacket(int prevId, int newId)
+    {
+        Debug.Log("UdpSendReconnectDataPacket");
+
+        cs_udp_packet_reconnect_data reconnectDataPacket = new cs_udp_packet_reconnect_data((byte)Marshal.SizeOf(typeof(cs_udp_packet_reconnect_data)), Convert.ToByte(CS.RECONNECT), prevId, newId);
+        UdpSendPacket(ref reconnectDataPacket);
     }
 
     public static void SendLoginPacket()
@@ -112,6 +127,15 @@ public static class NetworkUtils
         cs_packet_session_end sessionEndPacket = new cs_packet_session_end((byte)Marshal.SizeOf(typeof(cs_packet_session_end)), Convert.ToByte(CS.SESSION_END));
 
         SendPacket(ref sessionEndPacket);
+    }
+
+    public static void SendReconnect(int id)
+    {
+        Debug.Log("SendReconnect");
+
+        cs_packet_reconnect reconnectPacket = new cs_packet_reconnect((byte)Marshal.SizeOf(typeof(cs_packet_reconnect)), Convert.ToByte(CS.RECONNECT), id);
+
+        SendPacket(ref reconnectPacket);
     }
 
     private static void SendPacket<T>(ref T data)
