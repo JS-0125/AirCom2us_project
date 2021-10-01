@@ -115,8 +115,6 @@ void SessionManager::Reconnect(int sessionId, int prevId, Player* newObj) {
 
 // 일괄적으로 session 종료
 void SessionManager::EndSession(int sessionId) {
-	auto players = m_sessions[sessionId]->GetPlayers();
-	for (const auto& player : players)
-		PacketManager::SendEndSession(player->m_id, *(player->GetSocket()));
+	cout << "end session함수 - " << sessionId << endl;
 	m_sessions[sessionId]->CloseSession();
 }

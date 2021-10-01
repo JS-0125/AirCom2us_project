@@ -20,14 +20,14 @@ private:
 	int m_enemysCnt = 0;
 	vector<Player*> m_players;
 	lua_State* m_luaState;
-	mutex m_sl;
+	mutex m_closeLock;
 
 	void GetSessionTable(const char* tableName);
 	void GetSessionDatas(int session);
 public:
 	string m_sessionIP = ""; // udp ip
 	vector<SessionData> m_enemyDatas;
-	SESSION_STATE sessionState = SESSION_STATE::SESSION_CLOSE;
+	atomic<SESSION_STATE> sessionState = SESSION_STATE::SESSION_CLOSE;
 	int m_sessionType = -1;
 	void CreateSession(string ip);
 	void OpenSession(int playersCnt);

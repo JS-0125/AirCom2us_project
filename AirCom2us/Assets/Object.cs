@@ -7,7 +7,7 @@ public class Object : MonoBehaviour
 {
     [SerializeField]
     private Text hpPrefab;
-    private Text hpUi;
+    public Text hpUi;
     public int id;
     public Vector3 newPos = new Vector3(0, 0, 0);
     [SerializeField]

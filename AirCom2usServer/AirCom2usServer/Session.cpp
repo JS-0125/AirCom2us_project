@@ -1,4 +1,5 @@
 #include "Session.h"
+#include "PacketManager.h"
 
 void Session::GetSessionTable(const char* tableName) {
 	lua_getglobal(m_luaState, tableName);
@@ -155,6 +156,7 @@ void Session::SetSession(int enemysCnt, vector<SessionData> enemyDatas) {
 void Session::Reconnect(int prevId, Player* player) {
 	//RemovePlayer(prevId);
 	m_players.emplace_back(player);
+	++m_playersCnt;
 }
 
 bool Session::CheckSession() {
@@ -186,7 +188,12 @@ vector<Player*>& Session::GetPlayers() {
 }
 
 void Session::CloseSession() {
+	m_closeLock.lock();
+	if (m_playersCnt == 0)
+		return;
+	cout << "in close session ÇÔ¼ö - "  << m_playersCnt << endl;
 	for (int i = 0; i < m_playersCnt; ++i) {
+		PacketManager::SendEndSession(m_players[i]->m_id, *(m_players[i]->GetSocket()));
 		m_players[i]->m_move_time = 0;
 		m_players[i]->m_sessionId = 0;
 		m_players[i]->m_state = OBJECT_STATE::OBJST_CONNECTED;
@@ -196,6 +203,7 @@ void Session::CloseSession() {
 	m_enemysCnt = 0;
 	m_enemyDatas.clear();
 	sessionState = SESSION_STATE::SESSION_CLOSE;
+	m_closeLock.unlock();
 }
 
 bool Session::IsSessionEnd() {
@@ -208,10 +216,10 @@ bool Session::IsSessionEnd() {
 void Session::RemovePlayer(int playerId) {
 	for (auto i = m_players.begin(); i < m_players.end(); ++i) {
 		if ((*i)->m_id == playerId) {
-			(*i)->CloseSocket();
+			//(*i)->CloseSocket();
 			m_players.erase(i);
+			--m_playersCnt;
 			break;
 		}
 	}
-	--m_playersCnt;
 }

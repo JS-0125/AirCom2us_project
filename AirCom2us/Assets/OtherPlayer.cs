@@ -25,11 +25,15 @@ public class OtherPlayer : Object
         if (NetworkManager.gameState != GameState.INGAME)
             return;
         bulletCoroutine = StartCoroutine(Attack());
+        if (hpUi != null)
+            hpUi.gameObject.SetActive(true);
     }
 
     private void OnDisable()
     {
         StopAllCoroutines();
+        if (hpUi != null)
+            hpUi.gameObject.SetActive(false);
     }
 
     private void OnDestroy()
@@ -44,6 +48,7 @@ public class OtherPlayer : Object
     private void FixedUpdate()
     {
         this.transform.position = Vector3.Lerp(this.transform.position, newPos, 0.1f);
+        uiUpdate();
         if (hp <= 0)
             Dead();
     }

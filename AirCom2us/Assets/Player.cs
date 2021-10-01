@@ -37,11 +37,15 @@ public class Player : Object
         sendPositionCoroutineUdp = StartCoroutine(SendPositionUdp());
         sendPositionCoroutineTcp = StartCoroutine(SendPositionTcp());
         bulletCoroutine = StartCoroutine(Attack());
+        if (hpUi != null)
+            hpUi.gameObject.SetActive(true);
     }
     private void OnDisable()
     {
         Debug.Log("hp - " + hp);
         StopAllCoroutines();
+        if (hpUi != null)
+            hpUi.gameObject.SetActive(false);
         //StopCoroutine(sendPositionCoroutineUdp);
         //StopCoroutine(sendPositionCoroutineTcp);
         //StopCoroutine(bulletCoroutine);

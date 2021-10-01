@@ -20,9 +20,8 @@ public class Enemy : Object
     {
         if(collision.gameObject.tag == "bullet")
         {
-            Debug.Log("여기라고? - "+id+ "  :  " + collision.transform.position);
-
-            NetworkUtils.SendCollicionOccurred(NetworkManager.sessionId, this.id);
+            if (NetworkManager.gameState == GameState.INGAME)
+                NetworkUtils.SendCollicionOccurred(NetworkManager.sessionId, this.id);
             collision.gameObject.SetActive(false);
         }
     }

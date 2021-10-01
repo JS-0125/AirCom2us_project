@@ -24,6 +24,7 @@ public class NetworkManager : MonoBehaviour
 
     [SerializeField] private GameObject player;
     [SerializeField] private ObjectManager objectManager;
+    [SerializeField] private GameObject sessionUi;
     private struct sc_data_event
     {
         public SC type;
@@ -64,16 +65,13 @@ public class NetworkManager : MonoBehaviour
 
     private void Start()
     {
-        thrdClientReceive = new Thread(new ThreadStart(ListenForData));
-        thrdClientReceive.IsBackground = true;
-
-        thrdUdpClientReceive = new Thread(new ThreadStart(UdpListenForData));
-        thrdUdpClientReceive.IsBackground = true;
+        
     }
 
     private void OnDisable()
     {
         NetworkUtils.Disconnect();
+        Thread.Sleep(100);
         thrdUdpClientReceive.Abort();
     }
 
@@ -144,9 +142,12 @@ public class NetworkManager : MonoBehaviour
                     }
                 case SC.END_SESSION:
                     {
+                        Debug.Log("END_SESSION");
+
                         gameState = GameState.LOBBY;
                         objectManager.EndSession();
                         EndUdpNetworking();
+                        sessionUi.SetActive(true);
                         break;
                     }
                 case SC.RECONNECT_OK:
@@ -174,7 +175,6 @@ public class NetworkManager : MonoBehaviour
                     }
                 case SC.COLLISION_RESULT:
                     {
-
                         object collisionResult = new data_collition_result() as object;
                         NetworkUtils.BytesToStructure(data.data, ref collisionResult, typeof(data_collition_result));
                         var result = (data_collition_result)collisionResult;
@@ -192,10 +192,8 @@ public class NetworkManager : MonoBehaviour
             {
                 Debug.Log("DISCONNECTED");
                 gameState = GameState.DISCONNECTED;
-                thrdClientReceive.Abort();
-                thrdUdpClientReceive.Abort();
-                NetworkUtils.Disconnect();
-                NetworkUtils.UdpDisconnect();
+                EndUdpNetworking();
+                EndNetworking();
             }
         }
         if (gameState == GameState.DISCONNECTED)
@@ -207,10 +205,8 @@ public class NetworkManager : MonoBehaviour
 
                 gameState = GameState.FREE;
                 saved_packet_size = 0;
-                NetworkUtils.TryReConnect();
-                NetworkUtils.UdpJoinMulticast();
-                thrdClientReceive.Start();
-                thrdUdpClientReceive.Start();
+                ReStartNetworking();
+                StartUdpNetworking();
             }
         }
     }
@@ -223,21 +219,45 @@ public class NetworkManager : MonoBehaviour
         NetworkUtils.SendLoginPacket();
         Debug.Log(" tc - " + NetworkUtils.tc.Client.ToString());
 
+        thrdClientReceive = new Thread(new ThreadStart(ListenForData));
+        thrdClientReceive.IsBackground = true;
         thrdClientReceive.Start();
     }
 
+    public void ReStartNetworking()
+    {
+        NetworkUtils.TryReConnect();
+
+        NetworkUtils.SendLoginPacket();
+        Debug.Log(" tc - " + NetworkUtils.tc.Client.ToString());
+
+        thrdClientReceive = new Thread(new ThreadStart(ListenForData));
+        thrdClientReceive.IsBackground = true;
+        thrdClientReceive.Start();
+    }
+
+    public void EndNetworking()
+    {
+        NetworkUtils.Disconnect();
+        Thread.Sleep(100);
+        thrdClientReceive.Abort();
+    }
     public void StartUdpNetworking()
     {
         NetworkUtils.UdpJoinMulticast(sessionIp);
         Debug.Log(" uc - " + NetworkUtils.uc.Client.ToString());
-
+        if (thrdUdpClientReceive != null)
+            Debug.Log(thrdUdpClientReceive.ThreadState.ToString());
+        thrdUdpClientReceive = new Thread(new ThreadStart(UdpListenForData));
+        thrdUdpClientReceive.IsBackground = true;
         thrdUdpClientReceive.Start();
     }
 
     private void EndUdpNetworking()
     {
-        thrdUdpClientReceive.Abort();
         NetworkUtils.UdpDisconnect();
+        Thread.Sleep(100);
+        thrdUdpClientReceive.Abort();
     }
 
     public void OnApplicationPause(bool paused)
@@ -276,15 +296,23 @@ public class NetworkManager : MonoBehaviour
         catch (SocketException ex)
         {
             Debug.Log(ex);
+            Debug.Log("ÀÌ¾ß¾Ð");
         }
     }
 
     private void UdpListenForData()
     {
-        while (true)
+        try
         {
-            var data = NetworkUtils.uc.ReceiveAsync();
-            ProcessUdpPacket(data.Result.Buffer);
+            while (true)
+            {
+                var data = NetworkUtils.uc.ReceiveAsync();
+                ProcessUdpPacket(data.Result.Buffer);
+            }
+        }
+        catch (ThreadAbortException abortException)
+        {
+            Console.WriteLine((string)abortException.ExceptionState);
         }
     }
 

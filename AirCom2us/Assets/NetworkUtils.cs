@@ -41,7 +41,6 @@ public static class NetworkUtils
         if (tc.Connected)
         {
             Debug.Log("ReConnect OK");
-            SendLoginPacket();
         }
         else
             Debug.Log("ReConnect Fail");
@@ -68,7 +67,10 @@ public static class NetworkUtils
     public static void UdpDisconnect()
     {
         if(uc != null)
+        {
+            uc.DropMulticastGroup(multicastIP);
             uc.Close();
+        }
     }
 
     public static void Disconnect()

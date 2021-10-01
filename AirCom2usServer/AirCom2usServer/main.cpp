@@ -31,20 +31,19 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 	case CS::MOVE: {
 		cs_packet_move* packet = reinterpret_cast<cs_packet_move*>(p_buf);
 		// 이상행동 체크
-		if (obj->CheckAbnormalAction(packet)) {
+		//if (obj->CheckAbnormalAction(packet)) 
 			// session 종료
-			PacketManager::SendEndSession(obj->m_id, *(obj->GetSocket()));
-			sessionManager.RemovePlayer(obj->m_sessionId, obj->m_id);
+		//PacketManager::SendEndSession(obj->m_id, *(obj->GetSocket()));
+		//sessionManager.RemovePlayer(obj->m_sessionId, obj->m_id);
 
-			// 남은 플레이어들에게 해당 플레이어 제거
-			auto players = sessionManager.GetSession(obj->m_sessionId)->GetPlayers();
-			for (int i = 0; i < players.size(); ++i)
-				PacketManager::SendRemoveObj(players[i]->m_id, obj->m_id, *(players[i]->GetSocket()));
+		//// 남은 플레이어들에게 해당 플레이어 제거
+		//auto players = sessionManager.GetSession(obj->m_sessionId)->GetPlayers();
+		//for (int i = 0; i < players.size(); ++i)
+		//	PacketManager::SendRemoveObj(players[i]->m_id, obj->m_id, *(players[i]->GetSocket()));
 
-			// 플레이어 게임정보 리셋
-			obj->ResetInGameData();
-			obj->m_state = OBJECT_STATE::OBJST_CONNECTED;
-		}
+		//// 플레이어 게임정보 리셋
+		//obj->ResetInGameData();
+		//obj->m_state = OBJECT_STATE::OBJST_CONNECTED;
 		break;
 	}
 	case CS::CREATE_SESSION: {
@@ -75,8 +74,8 @@ void ProcessPacket(int p_id, unsigned char* p_buf)
 	}
 	case CS::SESSION_END: {
 		// session 정상 종료되는지 확인
-
 		// session 종료
+		cout << "SESSION_END" << endl;
 		sessionManager.EndSession(obj->m_sessionId);
 		break;
 	}
@@ -212,6 +211,7 @@ void Worker(HANDLE h_iocp, SOCKET l_socket)
 		}
 		case OP_HEARTBEAT: {
 			objManager.CheckHeartBeat();
+			sessionManager.CheckZombieSession();
 			timer.AddEvent(-1, -1, OP_HEARTBEAT, 20000);
 			break;
 		}

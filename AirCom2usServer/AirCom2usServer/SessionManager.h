@@ -20,18 +20,21 @@ public:
 	int GetSessionId(SESSION_STATE sessionState, int sessionType);
 	void CheckSession(int sessionId);
 	bool IsSessionEnd(int sessionId);
-	void Reconnect(int sessionId, int prevId, Player* newObj) {
-		m_sessions[sessionId]->Reconnect(prevId, newObj);
-		newObj->m_sessionId = sessionId;
-		newObj->m_state = OBJECT_STATE::OBJST_INGAME;
-
-		PacketManager::SendReconnectOk(newObj->m_id, sessionId, *(newObj->GetSocket()));
-	}
-
+	void Reconnect(int sessionId, int prevId, Player* newObj);
 	// 일괄적으로 session 종료
 	void EndSession(int sessionId);
 	void RemovePlayer(int sessionId, int playerId) {
 		m_sessions[sessionId]->RemovePlayer(playerId);
+	}
+	void CheckZombieSession() {
+		for (int i = 0; i < m_sessions.size(); ++i) {
+			if (m_sessions[i]->sessionState!= SESSION_STATE::SESSION_CLOSE) {
+				if (m_sessions[i]->GetPlayers().size() == 0) {
+					cout << "zombie session" << endl;
+					m_sessions[i]->CloseSession();
+				}
+			}
+		}
 	}
 };
 

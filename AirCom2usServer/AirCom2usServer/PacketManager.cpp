@@ -81,10 +81,12 @@ bool PacketManager::SendEndSession(int obj_id, SOCKET& socket) {
 	p.type = SC::END_SESSION;
 	p.size = sizeof(p);
 
-	if (ServerManager::Send(&p, socket))
+	if (ServerManager::Send(&p, socket)) {
+		cout << "success send end session" << endl;
 		return true;
+	}
+	cout << "fail send end session" << endl;
 	ServerManager::Disconnect(socket);
-
 	return false;
 }
 
